@@ -1,0 +1,85 @@
+import React from 'react';
+import { Microscope, Activity, Brain, Zap, ArrowUpRight } from 'lucide-react';
+import FadeIn from './FadeIn';
+import { FeatureCardProps } from '../types';
+
+const Card: React.FC<FeatureCardProps> = ({ title, description, icon: Icon, delay }) => (
+  <FadeIn delay={delay} className="h-full">
+    <div className="glass-panel p-8 h-full rounded-sm hover:bg-neon-blue/5 border border-white/5 hover:border-neon-blue/20 transition-all duration-500 group relative overflow-hidden">
+      
+      {/* Subtle Gradient Glow on Hover */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-neon-blue/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+
+      <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-y-2 group-hover:translate-y-0">
+        <ArrowUpRight className="text-neon-blue w-5 h-5" />
+      </div>
+      
+      <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-neon-blue/10 transition-all duration-500">
+        <Icon className="text-neon-blue w-6 h-6" />
+      </div>
+      
+      <h3 className="text-xl font-bold text-white mb-4 font-sans group-hover:text-neon-blue transition-colors duration-300">{title}</h3>
+      <p className="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors">{description}</p>
+      
+      <div className="mt-6 flex items-center space-x-2">
+        <span className="h-px w-8 bg-gray-700 group-hover:bg-neon-teal transition-colors duration-500"></span>
+        <span className="text-[10px] font-mono text-gray-600 group-hover:text-neon-teal uppercase tracking-widest transition-colors duration-500">Classified Data</span>
+      </div>
+    </div>
+  </FadeIn>
+);
+
+const Research: React.FC = () => {
+  const features = [
+    {
+      title: "GLP-1 Innovation",
+      description: "Pushing beyond standard models into novel receptor agonists with high-affinity binding profiles in test environments.",
+      icon: Microscope,
+      delay: 0
+    },
+    {
+      title: "Metabolic Signaling",
+      description: "Mapping the hidden pathways of mitochondrial efficiency and systemic energy utilization in cellular models.",
+      icon: Zap,
+      delay: 200
+    },
+    {
+      title: "Endocrine Modeling",
+      description: "Theoretical frameworks for peptide stability and precise receptor targeting selectivity.",
+      icon: Activity,
+      delay: 400
+    },
+    {
+      title: "Neuro-Peptide Drift",
+      description: "Exploring neuro-peptide signal transduction. Investigating receptor density in complex neural models.",
+      icon: Brain,
+      delay: 600
+    }
+  ];
+
+  return (
+    <section id="research" className="py-32 px-6 relative">
+      {/* Background Accent */}
+      <div className="absolute right-0 top-1/3 w-[500px] h-[500px] bg-neon-teal/5 rounded-full blur-[100px] pointer-events-none"></div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="mb-20 text-center">
+          <FadeIn>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Research Sectors</h2>
+            <p className="text-gray-500 max-w-xl mx-auto font-light">
+              Our work is compartmentalized into four primary vectors of inquiry for laboratory application.
+            </p>
+          </FadeIn>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {features.map((f, i) => (
+            <Card key={i} {...f} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Research;
