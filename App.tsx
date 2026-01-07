@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import WaveBackground from './components/WaveBackground';
 import GridBackground from './components/GridBackground';
 import Navigation from './components/Navigation';
@@ -8,37 +8,78 @@ import About from './components/About';
 import Research from './components/Research';
 import Store from './components/Store';
 import Philosophy from './components/Philosophy';
-import Contact from './components/Contact';
 import Footer from './components/Footer';
+import AgeVerification from './components/AgeVerification';
+import Checkout from './components/Checkout';
+import { BrandTheme } from './theme';
 
-type ViewState = 'home' | 'store';
+export type ViewState = 'home' | 'store' | 'checkout';
+
+export interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  sku: string;
+}
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewState>('home');
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [cart, setCart] = useState<CartItem[]>([]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const currentProgress = (window.scrollY / totalScroll) * 100;
+      setScrollProgress(currentProgress);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleNavigate = (view: ViewState, sectionId?: string) => {
     setCurrentView(view);
     
     if (view === 'home' && sectionId) {
-      // Allow time for DOM to update if switching from store to home
       setTimeout(() => {
         const element = document.getElementById(sectionId);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth' });
         }
       }, 100);
-    } else if (view === 'home') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (view === 'store') {
+    } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
+  const addToCart = (product: any, quantity: number) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item => 
+          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+        );
+      }
+      return [...prev, { ...product, quantity }];
+    });
+  };
+
+  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+
   return (
-    <div className="min-h-screen bg-obsidian text-slate-200 selection:bg-neon-blue selection:text-obsidian relative">
+    <div className={`min-h-screen bg-[${BrandTheme.colors.obsidian}] text-slate-200 selection:bg-neon-blue selection:text-obsidian relative`}>
+      <AgeVerification />
+      
+      {/* Scroll Progress Bar */}
+      <div 
+        className="fixed top-0 left-0 h-[2px] bg-neon-blue z-[100] transition-all duration-150" 
+        style={{ width: `${scrollProgress}%` }}
+      />
+      
       <WaveBackground />
       <GridBackground />
-      <Navigation currentView={currentView} onNavigate={handleNavigate} />
+      <Navigation currentView={currentView} onNavigate={handleNavigate} cartCount={cartCount} />
       
       <main className="relative z-10 flex flex-col gap-0 min-h-screen">
         {currentView === 'home' ? (
@@ -47,10 +88,19 @@ function App() {
             <About />
             <Research />
             <Philosophy />
-            <Contact />
           </>
+        ) : currentView === 'store' ? (
+          <Store 
+            onBack={() => handleNavigate('home')} 
+            onAddToCart={addToCart}
+            onGoToCheckout={() => handleNavigate('checkout')}
+          />
         ) : (
-          <Store onBack={() => handleNavigate('home')} />
+          <Checkout 
+            cart={cart} 
+            onBack={() => handleNavigate('store')}
+            onClearCart={() => setCart([])}
+          />
         )}
       </main>
 

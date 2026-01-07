@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Microscope, Activity, Brain, Zap, ArrowUpRight } from 'lucide-react';
+import { Microscope, Activity, Database, Package, ArrowUpRight } from 'lucide-react';
 import FadeIn from './FadeIn';
 import { FeatureCardProps } from '../types';
 
@@ -18,12 +19,12 @@ const Card: React.FC<FeatureCardProps> = ({ title, description, icon: Icon, dela
         <Icon className="text-neon-blue w-6 h-6" />
       </div>
       
-      <h3 className="text-xl font-bold text-white mb-4 font-sans group-hover:text-neon-blue transition-colors duration-300">{title}</h3>
-      <p className="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors">{description}</p>
+      <h3 className="text-lg font-bold text-white mb-4 font-sans uppercase tracking-wider group-hover:text-neon-blue transition-colors duration-300">{title}</h3>
+      <p className="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors font-light">{description}</p>
       
       <div className="mt-6 flex items-center space-x-2">
         <span className="h-px w-8 bg-gray-700 group-hover:bg-neon-teal transition-colors duration-500"></span>
-        <span className="text-[10px] font-mono text-gray-600 group-hover:text-neon-teal uppercase tracking-widest transition-colors duration-500">Classified Data</span>
+        <span className="text-[10px] font-mono text-gray-600 group-hover:text-neon-teal uppercase tracking-widest transition-colors duration-500">Inventory Status</span>
       </div>
     </div>
   </FadeIn>
@@ -32,27 +33,27 @@ const Card: React.FC<FeatureCardProps> = ({ title, description, icon: Icon, dela
 const Research: React.FC = () => {
   const features = [
     {
-      title: "GLP-1 Innovation",
-      description: "Pushing beyond standard models into novel receptor agonists with high-affinity binding profiles in test environments.",
-      icon: Microscope,
+      title: "Metabolic Vectors",
+      description: "Standardized reference materials for investigating receptor agonism in metabolic signaling pathways and cellular energy models.",
+      icon: Activity,
       delay: 0
     },
     {
-      title: "Metabolic Signaling",
-      description: "Mapping the hidden pathways of mitochondrial efficiency and systemic energy utilization in cellular models.",
-      icon: Zap,
+      title: "Analytical Samples",
+      description: "High-affinity binding compounds provided in stable lyophilized form for verified laboratory storage and transit.",
+      icon: Package,
       delay: 200
     },
     {
-      title: "Endocrine Modeling",
-      description: "Theoretical frameworks for peptide stability and precise receptor targeting selectivity.",
-      icon: Activity,
+      title: "Inventory Integrity",
+      description: "Third-party analytical verification provided for all cataloged lots to ensure zero-variance research outcomes.",
+      icon: Database,
       delay: 400
     },
     {
-      title: "Neuro-Peptide Drift",
-      description: "Exploring neuro-peptide signal transduction. Investigating receptor density in complex neural models.",
-      icon: Brain,
+      title: "Ligand Selection",
+      description: "Specific chemical ligands for targeted investigation of receptor selectivity and signal transduction in test environments.",
+      icon: Microscope,
       delay: 600
     }
   ];
@@ -65,9 +66,9 @@ const Research: React.FC = () => {
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="mb-20 text-center">
           <FadeIn>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Research Sectors</h2>
-            <p className="text-gray-500 max-w-xl mx-auto font-light">
-              Our work is compartmentalized into four primary vectors of inquiry for laboratory application.
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 uppercase tracking-tight">Catalog Classifications</h2>
+            <p className="text-gray-500 max-w-xl mx-auto font-light font-mono text-xs uppercase tracking-widest">
+              Primary chemical classifications for laboratory distribution.
             </p>
           </FadeIn>
         </div>

@@ -18,17 +18,17 @@ const Hero: React.FC<HeroProps> = ({ onEnterLab }) => {
       <div className="max-w-5xl mx-auto z-10 text-center md:text-left mt-20 relative">
         <FadeIn delay={400}>
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-white mb-6 leading-tight">
-            We Engineer What <br/>
+            Precision <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue/80 to-neon-teal/80">
-              Nature Hasn't
+              Reference
             </span> <br/>
-            Discovered Yet.
+            Materials.
           </h1>
         </FadeIn>
 
         <FadeIn delay={600}>
           <p className="text-gray-400 text-lg md:text-xl max-w-2xl font-light mb-12 leading-relaxed border-l-2 border-neon-blue/30 pl-6">
-            DarkTidesResearch is a laboratory chemical supplier exploring next-generation peptide structures and molecular potentials.
+            DarkTidesResearch provides high-purity laboratory reagents for analytical inquiry. Optimized for consistency and verifiable research standards.
           </p>
         </FadeIn>
 
@@ -46,10 +46,10 @@ const Hero: React.FC<HeroProps> = ({ onEnterLab }) => {
       {/* Decorative background elements */}
       <div className="absolute bottom-20 right-10 hidden md:block z-20">
          <div className="flex flex-col space-y-2 text-right">
-            <span className="text-[10px] font-mono text-gray-600">COORDINATES</span>
-            <span className="text-xs font-mono text-neon-blue">34.0522° N, 118.2437° W</span>
-            <span className="text-[10px] font-mono text-gray-600 mt-2">DEPTH</span>
-            <span className="text-xs font-mono text-neon-teal">11,034 M</span>
+            <span className="text-[10px] font-mono text-gray-600 uppercase tracking-widest">Inventory Status</span>
+            <span className="text-xs font-mono text-neon-blue">Active // Verified</span>
+            <span className="text-[10px] font-mono text-gray-600 mt-2 uppercase tracking-widest">Protocol</span>
+            <span className="text-xs font-mono text-neon-teal">Laboratory Only</span>
          </div>
       </div>
       

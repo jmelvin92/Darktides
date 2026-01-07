@@ -2,9 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ShoppingBag } from 'lucide-react';
 import Logo from './Logo';
-import { NavProps } from '../types';
 
-const Navigation: React.FC<NavProps> = ({ currentView, onNavigate }) => {
+interface NavProps {
+  currentView: 'home' | 'store' | 'checkout';
+  onNavigate: (view: 'home' | 'store' | 'checkout', sectionId?: string) => void;
+  cartCount: number;
+}
+
+const Navigation: React.FC<NavProps> = ({ currentView, onNavigate, cartCount }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -22,16 +27,17 @@ const Navigation: React.FC<NavProps> = ({ currentView, onNavigate }) => {
     
     if (sectionId === 'store') {
       onNavigate('store');
+    } else if (sectionId === 'checkout') {
+      onNavigate('checkout');
     } else {
       onNavigate('home', sectionId);
     }
   };
 
   const navLinks = [
-    { label: 'Store', id: 'store' },
-    { label: 'Research', id: 'research' },
-    { label: 'Philosophy', id: 'philosophy' },
-    { label: 'Access', id: 'contact' },
+    { label: 'Catalog', id: 'store' },
+    { label: 'Operations', id: 'about' },
+    { label: 'Classifications', id: 'research' },
   ];
 
   return (
@@ -54,23 +60,30 @@ const Navigation: React.FC<NavProps> = ({ currentView, onNavigate }) => {
               key={link.label} 
               href={`#${link.id}`}
               onClick={(e) => handleLinkClick(e, link.id)}
-              className={`text-xs font-mono uppercase tracking-widest hover:text-white transition-colors duration-300 relative group ${
-                currentView === 'store' && link.id === 'store' ? 'text-neon-blue' : 'text-gray-400'
+              className={`text-[10px] font-mono uppercase tracking-[0.2em] hover:text-white transition-colors duration-300 relative group ${
+                currentView === link.id ? 'text-neon-blue' : 'text-gray-400'
               }`}
             >
               {link.label}
               <span className={`absolute -bottom-2 left-0 h-[1px] bg-neon-blue transition-all duration-300 ${
-                 currentView === 'store' && link.id === 'store' ? 'w-full' : 'w-0 group-hover:w-full'
+                 currentView === link.id ? 'w-full' : 'w-0 group-hover:w-full'
               }`}></span>
             </a>
           ))}
           
-          <button className="relative text-gray-400 hover:text-white transition-colors">
+          <button 
+            onClick={(e) => handleLinkClick(e, 'checkout')}
+            className={`relative transition-colors ${currentView === 'checkout' ? 'text-neon-blue' : 'text-gray-400 hover:text-white'}`}
+          >
             <ShoppingBag className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-blue opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-neon-blue"></span>
-            </span>
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-blue opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-neon-blue text-[8px] font-bold text-obsidian items-center justify-center">
+                  {cartCount}
+                </span>
+              </span>
+            )}
           </button>
         </div>
 
@@ -90,12 +103,19 @@ const Navigation: React.FC<NavProps> = ({ currentView, onNavigate }) => {
             <a 
               key={link.label} 
               href={`#${link.id}`}
-              className="text-sm font-mono uppercase tracking-widest text-gray-400 hover:text-white"
+              className="text-[10px] font-mono uppercase tracking-widest text-gray-400 hover:text-white"
               onClick={(e) => handleLinkClick(e, link.id)}
             >
               {link.label}
             </a>
           ))}
+          <a 
+            href="#checkout"
+            className="text-[10px] font-mono uppercase tracking-widest text-gray-400 hover:text-white"
+            onClick={(e) => handleLinkClick(e, 'checkout')}
+          >
+            Review Cart ({cartCount})
+          </a>
         </div>
       </div>
     </nav>
