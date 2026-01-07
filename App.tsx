@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import WaveBackground from './components/WaveBackground';
 import GridBackground from './components/GridBackground';
 import Navigation from './components/Navigation';
