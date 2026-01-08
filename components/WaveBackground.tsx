@@ -51,7 +51,7 @@ const WaveBackground: React.FC = () => {
 
       time += speed;
 
-      lines.forEach((line) => {
+      lines.forEach((line, i) => {
         ctx.beginPath();
         
         // Fading opacity based on depth

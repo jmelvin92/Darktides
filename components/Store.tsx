@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { ShoppingCart, AlertTriangle, Check, ArrowLeft, ShieldAlert, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShoppingCart, AlertTriangle, Check, ArrowLeft, ShieldAlert, ArrowRight, ShoppingBag } from 'lucide-react';
 import FadeIn from './FadeIn';
 import Logo from './Logo';
 
@@ -8,6 +8,7 @@ interface StoreProps {
   onBack: () => void;
   onAddToCart: (product: any, quantity: number) => void;
   onGoToCheckout: () => void;
+  cartCount: number;
 }
 
 interface Product {
@@ -179,7 +180,18 @@ const ProductCard: React.FC<{ product: Product, onAddToCart: (product: Product, 
   );
 };
 
-const Store: React.FC<StoreProps> = ({ onBack, onAddToCart, onGoToCheckout }) => {
+const Store: React.FC<StoreProps> = ({ onBack, onAddToCart, onGoToCheckout, cartCount }) => {
+  const [showFloatingCart, setShowFloatingCart] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show floating cart after scrolling 300px down
+      setShowFloatingCart(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <section className="pt-32 pb-24 px-6 relative min-h-screen">
       <div className="max-w-7xl mx-auto">
@@ -245,6 +257,29 @@ const Store: React.FC<StoreProps> = ({ onBack, onAddToCart, onGoToCheckout }) =>
           </div>
         </FadeIn>
       </div>
+
+      {/* Floating Action Cart Button */}
+      <button
+        onClick={onGoToCheckout}
+        className={`fixed bottom-8 right-8 z-[60] group p-5 bg-obsidian/80 backdrop-blur-xl border border-neon-blue/30 rounded-full shadow-[0_0_30px_rgba(56,189,248,0.2)] hover:border-neon-blue hover:shadow-[0_0_40px_rgba(56,189,248,0.4)] transition-all duration-500 transform ${
+          showFloatingCart ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-20 opacity-0 scale-75'
+        }`}
+      >
+        <div className="relative">
+          <ShoppingBag className="w-6 h-6 text-neon-blue group-hover:scale-110 transition-transform duration-300" />
+          {cartCount > 0 && (
+            <span className="absolute -top-3 -right-3 flex h-5 w-5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-blue opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-5 w-5 bg-neon-blue text-[10px] font-bold text-obsidian items-center justify-center shadow-lg">
+                {cartCount}
+              </span>
+            </span>
+          )}
+        </div>
+        <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 px-3 py-1 bg-obsidian/90 border border-white/10 text-white font-mono text-[10px] tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+          View Cart & Checkout
+        </span>
+      </button>
     </section>
   );
 };

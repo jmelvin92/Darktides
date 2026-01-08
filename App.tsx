@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import WaveBackground from './components/WaveBackground';
 import GridBackground from './components/GridBackground';
 import Navigation from './components/Navigation';
@@ -94,6 +94,7 @@ function App() {
             onBack={() => handleNavigate('home')} 
             onAddToCart={addToCart}
             onGoToCheckout={() => handleNavigate('checkout')}
+            cartCount={cartCount}
           />
         ) : (
           <Checkout 

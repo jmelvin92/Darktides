@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, CreditCard, Truck, ShieldCheck, Lock, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, Truck, ShieldCheck, Lock, CheckCircle2, Package } from 'lucide-react';
 import FadeIn from './FadeIn';
 import { CartItem } from '../App';
 
@@ -62,11 +62,9 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
   };
 
   const handleReturnToHome = () => {
-    // Instead of reload which might break routing context in some environments
     onBack();
   };
 
-  // Helper for required labels
   const RequiredLabel: React.FC<{ children: React.ReactNode; required?: boolean }> = ({ children, required = true }) => (
     <label className="text-[10px] font-mono text-gray-500 uppercase tracking-widest flex items-center gap-1">
       {children}
@@ -254,40 +252,69 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
           {/* Sidebar / Summary */}
           <div className="lg:col-span-5">
             <FadeIn delay={200}>
-              <div className="glass-panel p-8 space-y-8">
-                <h3 className="text-sm font-bold text-white uppercase tracking-widest font-mono border-b border-white/5 pb-4">Order Summary</h3>
+              <div className="glass-panel p-8 space-y-8 border-l border-white/5">
+                <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                  <Package className="w-4 h-4 text-neon-blue" />
+                  <h3 className="text-sm font-bold text-white uppercase tracking-widest font-mono">Order Summary</h3>
+                </div>
                 
-                <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                   {cart.map((item) => (
-                    <div key={item.id} className="flex justify-between items-start gap-4 text-xs">
-                      <div className="space-y-1">
-                        <p className="text-white font-bold uppercase tracking-tight">{item.name}</p>
-                        <p className="text-[9px] font-mono text-gray-600 uppercase">SKU: {item.sku}</p>
-                        <p className="text-neon-blue font-mono">Quantity: {item.quantity}</p>
+                    <div key={item.id} className="group py-4 border-b border-white/5 last:border-0 transition-colors hover:bg-white/5 px-2 -mx-2 rounded">
+                      <div className="flex justify-between items-start gap-4 mb-2">
+                        <div className="space-y-1">
+                          <p className="text-white font-bold uppercase tracking-tight text-xs leading-tight group-hover:text-neon-blue transition-colors">
+                            {item.name}
+                          </p>
+                        </div>
+                        <span className="text-white font-mono text-xs font-bold shrink-0">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </span>
                       </div>
-                      <span className="text-white font-mono">${(item.price * item.quantity).toFixed(2)}</span>
+                      
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-mono text-gray-600 uppercase tracking-widest">SKU</span>
+                          <span className="text-[9px] font-mono text-gray-400 font-bold">{item.sku}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-mono text-gray-600 uppercase tracking-widest">QTY</span>
+                          <span className="text-[9px] font-mono text-neon-blue font-bold">{item.quantity}</span>
+                        </div>
+                        <div className="flex items-center gap-2 ml-auto">
+                          <span className="text-[8px] font-mono text-gray-700 italic">${item.price.toFixed(2)}/unit</span>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="space-y-3 pt-6 border-t border-white/5 font-mono text-[10px] uppercase">
+                <div className="space-y-4 pt-6 font-mono text-[10px] uppercase tracking-widest">
                   <div className="flex justify-between text-gray-500">
                     <span>Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span className="text-white">${subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-500">
-                    <span>Shipping</span>
-                    <span>${shipping.toFixed(2)}</span>
+                    <span>Shipping <span className="text-[8px] italic opacity-50">(Standard Cold-Chain)</span></span>
+                    <span className="text-white">${shipping.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-neon-blue text-sm font-bold pt-2 border-t border-white/5">
-                    <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                  <div className="pt-4 mt-4 border-t border-white/10">
+                    <div className="flex justify-between items-center text-neon-blue">
+                      <span className="text-xs font-bold">Total Due</span>
+                      <span className="text-xl font-bold tracking-tighter">${total.toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-center gap-2 text-[8px] text-gray-700 font-mono mt-4">
-                  <Lock className="w-3 h-3" />
-                  <span>SECURE ENCRYPTED CHECKOUT</span>
+                <div className="flex flex-col items-center gap-3 mt-6">
+                  <div className="flex items-center gap-2 text-[8px] text-gray-700 font-mono">
+                    <Lock className="w-3 h-3" />
+                    <span>SECURE ENCRYPTED CHECKOUT</span>
+                  </div>
+                  <div className="w-full h-px bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
+                  <p className="text-[8px] text-gray-800 text-center font-mono leading-relaxed">
+                    LABORATORY REAGENTS // NOT FOR HUMAN USE
+                  </p>
                 </div>
               </div>
             </FadeIn>
