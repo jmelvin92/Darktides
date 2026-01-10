@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { inventoryService } from '../lib/inventory/InventoryService';
+import { supabase } from '../lib/supabase/client';
 
 export function useInventory() {
   const [checking, setChecking] = useState(false);
@@ -7,6 +8,18 @@ export function useInventory() {
   const checkAndReserve = useCallback(async (productId: string, quantity: number) => {
     setChecking(true);
     console.log('Checking and reserving:', { productId, quantity });
+    
+    // First, let's check what products actually exist
+    try {
+      const { data: allProducts, error: productsError } = await supabase
+        .from('products')
+        .select('id, name')
+        .eq('is_active', true);
+      console.log('All products in database:', allProducts, 'Error:', productsError);
+    } catch (e) {
+      console.log('Error fetching products:', e);
+    }
+    
     try {
       // First check availability
       const availabilityCheck = await inventoryService.checkAvailability(productId, quantity);
