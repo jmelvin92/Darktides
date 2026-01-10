@@ -6,11 +6,14 @@ export function useInventory() {
 
   const checkAndReserve = useCallback(async (productId: string, quantity: number) => {
     setChecking(true);
+    console.log('Checking and reserving:', { productId, quantity });
     try {
       // First check availability
       const availabilityCheck = await inventoryService.checkAvailability(productId, quantity);
+      console.log('Availability check result:', availabilityCheck);
       
       if (!availabilityCheck.available) {
+        console.log('Product not available:', availabilityCheck.message);
         return {
           success: false,
           message: availabilityCheck.message || 'Product temporarily unavailable'
@@ -19,6 +22,7 @@ export function useInventory() {
 
       // If available, reserve it
       const reservation = await inventoryService.reserveInventory(productId, quantity);
+      console.log('Reservation result:', reservation);
       
       return {
         success: reservation.success,
