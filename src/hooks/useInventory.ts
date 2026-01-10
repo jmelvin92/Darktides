@@ -9,11 +9,11 @@ export function useInventory() {
     setChecking(true);
     console.log('Checking and reserving:', { productId, quantity });
     
-    // First, let's check what products actually exist
+    // First, let's check what products actually exist and their reserved_quantity
     try {
       const { data: allProducts, error: productsError } = await supabase
         .from('products')
-        .select('id, name')
+        .select('id, name, stock_quantity, reserved_quantity')
         .eq('is_active', true);
       console.log('All products in database:', allProducts, 'Error:', productsError);
     } catch (e) {
