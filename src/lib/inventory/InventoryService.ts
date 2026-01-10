@@ -69,7 +69,7 @@ class InventoryService {
       }
 
       if (!data || !data[0]?.success) {
-        console.log('No data or success=false:', { data });
+        console.log('No data or success=false:', { data, firstRow: data?.[0] });
         return { success: false, message: 'Product temporarily unavailable' };
       }
 
