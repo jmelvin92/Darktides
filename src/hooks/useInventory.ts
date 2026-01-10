@@ -1,34 +1,16 @@
 import { useState, useCallback } from 'react';
 import { inventoryService } from '../lib/inventory/InventoryService';
-import { supabase } from '../lib/supabase/client';
 
 export function useInventory() {
   const [checking, setChecking] = useState(false);
 
   const checkAndReserve = useCallback(async (productId: string, quantity: number) => {
     setChecking(true);
-    console.log('Checking and reserving:', { productId, quantity });
-    
-    // Test if we can query the specific product with FOR UPDATE equivalent
-    try {
-      const { data: specificProduct, error: specificError } = await supabase
-        .from('products')
-        .select('id, name, stock_quantity, reserved_quantity, is_active')
-        .eq('id', productId)
-        .eq('is_active', true)
-        .single();
-      console.log('Specific product query:', specificProduct, 'Error:', specificError);
-    } catch (e) {
-      console.log('Error fetching specific product:', e);
-    }
-    
     try {
       // First check availability
       const availabilityCheck = await inventoryService.checkAvailability(productId, quantity);
-      console.log('Availability check result:', availabilityCheck);
       
       if (!availabilityCheck.available) {
-        console.log('Product not available:', availabilityCheck.message);
         return {
           success: false,
           message: availabilityCheck.message || 'Product temporarily unavailable'
@@ -37,7 +19,6 @@ export function useInventory() {
 
       // If available, reserve it
       const reservation = await inventoryService.reserveInventory(productId, quantity);
-      console.log('Reservation result:', reservation);
       
       return {
         success: reservation.success,

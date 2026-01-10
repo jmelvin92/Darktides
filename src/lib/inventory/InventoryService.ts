@@ -54,14 +54,11 @@ class InventoryService {
 
   async reserveInventory(productId: string, quantity: number): Promise<ReservationResult> {
     try {
-      console.log('Calling reserve_inventory with:', { productId, quantity, sessionId: this.sessionId });
       const { data, error } = await (supabase.rpc as any)('reserve_inventory', {
         p_product_id: productId,
         p_quantity: quantity,
         p_session_id: this.sessionId
       });
-
-      console.log('reserve_inventory response:', { data, error });
 
       if (error) {
         console.error('Reservation error:', error);
@@ -69,7 +66,6 @@ class InventoryService {
       }
 
       if (!data || !data[0]?.success) {
-        console.log('No data or success=false:', { data, firstRow: data?.[0] });
         return { success: false, message: 'Product temporarily unavailable' };
       }
 
@@ -134,13 +130,10 @@ class InventoryService {
 
   async finalizeOrder(orderId: string): Promise<{ success: boolean; message?: string }> {
     try {
-      console.log('Finalizing order with:', { orderId, sessionId: this.sessionId });
       const { data, error } = await (supabase.rpc as any)('finalize_order', {
         p_order_id: orderId,
         p_session_id: this.sessionId
       });
-
-      console.log('Finalize order response:', { data, error });
 
       if (error) {
         console.error('Finalize order error:', error);
