@@ -54,11 +54,14 @@ class InventoryService {
 
   async reserveInventory(productId: string, quantity: number): Promise<ReservationResult> {
     try {
+      console.log('Calling reserve_inventory with:', { productId, quantity, sessionId: this.sessionId });
       const { data, error } = await (supabase.rpc as any)('reserve_inventory', {
         p_product_id: productId,
         p_quantity: quantity,
         p_session_id: this.sessionId
       });
+
+      console.log('reserve_inventory response:', { data, error });
 
       if (error) {
         console.error('Reservation error:', error);
@@ -66,6 +69,7 @@ class InventoryService {
       }
 
       if (!data || !data[0]?.success) {
+        console.log('No data or success=false:', { data });
         return { success: false, message: 'Product temporarily unavailable' };
       }
 
