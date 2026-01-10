@@ -44,8 +44,10 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         
-      - name: Copy CNAME
-        run: cp CNAME dist/
+      - name: Copy CNAME and .nojekyll
+        run: |
+          cp CNAME dist/
+          cp .nojekyll dist/
         
       - name: Setup Pages
         uses: actions/configure-pages@v4
