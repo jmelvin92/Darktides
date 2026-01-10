@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, AlertTriangle, Check, ArrowLeft, ShieldAlert, ArrowRight, ShoppingBag } from 'lucide-react';
 import FadeIn from './FadeIn';
 import Logo from './Logo';
+import { useProducts } from '../src/hooks/useProducts';
+import { useInventory } from '../src/hooks/useInventory';
 
 interface StoreProps {
   onBack: () => void;
@@ -20,59 +22,30 @@ interface Product {
   sku: string;
   description: string;
   shortName: string;
+  stockQuantity: number;
 }
-
-const products: Product[] = [
-  {
-    id: 'glp3-10',
-    name: 'GLP-3 (RT) 10mg',
-    shortName: 'GLP-3',
-    dosage: '10 MG',
-    price: 50.00,
-    oldPrice: 75.00,
-    sku: 'DT-GLP3-010',
-    description: 'GLP-3 is an investigational peptide and triple receptor agonist (GLP-1, GIP, and glucagon) studied for its potential role in metabolic regulation, including glucose balance, energy expenditure, and weight management pathways. For research use only.'
-  },
-  {
-    id: 'glp3-20',
-    name: 'GLP-3 (RT) 20mg',
-    shortName: 'GLP-3',
-    dosage: '20 MG',
-    price: 99.00,
-    oldPrice: 145.00,
-    sku: 'DT-GLP3-020',
-    description: 'GLP-3 is an investigational peptide and triple receptor agonist (GLP-1, GIP, and glucagon) studied for its potential role in metabolic regulation, including glucose balance, energy expenditure, and weight management pathways. For research use only.'
-  },
-  {
-    id: 'ghkcu-100',
-    name: 'GHK-Cu 100MG',
-    shortName: 'GHK-Cu',
-    dosage: '100 MG',
-    price: 30.00,
-    oldPrice: 45.00,
-    sku: 'DT-GHKC-100',
-    description: 'GHK-Cu is a copper peptide studied in research for its role in tissue repair, wound healing, and regenerative processes. For research use only.'
-  },
-  {
-    id: 'motsc-10',
-    name: 'MOTS-C 10 MG',
-    shortName: 'MOTS-C',
-    dosage: '10 MG',
-    price: 30.00,
-    oldPrice: 45.00,
-    sku: 'DT-MOTS-010',
-    description: 'MOTS-C is a mitochondrial-derived peptide studied for its potential role in supporting metabolism, energy regulation, and overall cellular health. For research use only.'
-  }
-];
 
 const ProductCard: React.FC<{ product: Product, onAddToCart: (product: Product, quantity: number) => void }> = ({ product, onAddToCart }) => {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
+  const { checkAndReserve } = useInventory();
+  
+  const isOutOfStock = product.stockQuantity === 0;
 
-  const handleAdd = () => {
-    onAddToCart(product, quantity);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+  const handleAdd = async () => {
+    if (isOutOfStock) return;
+    
+    const result = await checkAndReserve(product.id, quantity);
+    
+    if (result.success) {
+      onAddToCart(product, quantity);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    } else {
+      setUnavailable(true);
+      setTimeout(() => setUnavailable(false), 3000);
+    }
   };
 
   return (
@@ -84,7 +57,15 @@ const ProductCard: React.FC<{ product: Product, onAddToCart: (product: Product, 
           <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent rounded-xl opacity-20" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-neon-blue/10 blur-[80px] rounded-full -z-10"></div>
           
-          <div className="relative z-10 flex flex-col items-center transform scale-125 md:scale-150 transition-transform duration-700 group-hover/card:scale-[1.3] md:group-hover/card:scale-[1.55]">
+          {isOutOfStock && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center">
+              <div className="bg-red-900/95 backdrop-blur-sm px-6 py-3 rounded-lg border border-red-700/50 shadow-2xl transform rotate-[-5deg]">
+                <p className="text-white font-bold uppercase tracking-widest text-lg">Out of Stock</p>
+              </div>
+            </div>
+          )}
+          
+          <div className={`relative z-10 flex flex-col items-center transform scale-125 md:scale-150 transition-transform duration-700 group-hover/card:scale-[1.3] md:group-hover/card:scale-[1.55] ${isOutOfStock ? 'opacity-40' : ''}`}>
               <div className="w-24 h-5 bg-neutral-900 rounded-t-sm shadow-lg z-30 border-t border-white/20 relative">
                   <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent rounded-t-sm"></div>
               </div>
@@ -141,22 +122,54 @@ const ProductCard: React.FC<{ product: Product, onAddToCart: (product: Product, 
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <div className="flex items-center border border-white/10 bg-white/5 w-fit">
-              <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 py-3 text-white hover:bg-white/10 transition-colors">-</button>
+            <div className={`flex items-center border border-white/10 bg-white/5 w-fit ${isOutOfStock ? 'opacity-50' : ''}`}>
+              <button 
+                onClick={() => setQuantity(Math.max(1, quantity - 1))} 
+                className="px-4 py-3 text-white hover:bg-white/10 transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                disabled={isOutOfStock}
+              >-</button>
               <span className="px-4 py-3 text-white font-mono w-12 text-center">{quantity}</span>
-              <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-3 text-white hover:bg-white/10 transition-colors">+</button>
+              <button 
+                onClick={() => setQuantity(quantity + 1)} 
+                className="px-4 py-3 text-white hover:bg-white/10 transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                disabled={isOutOfStock}
+              >+</button>
             </div>
             
             <button 
               onClick={handleAdd}
               className={`flex-1 font-bold uppercase tracking-widest py-3 px-8 transition-all flex items-center justify-center gap-2 shadow-lg ${
-                added 
+                isOutOfStock
+                ? 'bg-gray-800 text-gray-500 shadow-gray-800/20 cursor-not-allowed border border-gray-700'
+                : unavailable
+                ? 'bg-gray-700 text-gray-400 shadow-gray-700/20 cursor-not-allowed'
+                : added 
                 ? 'bg-neon-teal text-obsidian shadow-neon-teal/20' 
                 : 'bg-neon-blue hover:bg-neon-blue/90 text-obsidian shadow-neon-blue/20'
               }`}
+              disabled={isOutOfStock || unavailable}
             >
-              {added ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
-              {added ? 'Added to Cart' : 'Add to Cart'}
+              {isOutOfStock ? (
+                <>
+                  <AlertTriangle className="w-4 h-4" />
+                  Out of Stock
+                </>
+              ) : unavailable ? (
+                <>
+                  <AlertTriangle className="w-4 h-4" />
+                  Temporarily Unavailable
+                </>
+              ) : added ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  Added to Cart
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className="w-4 h-4" />
+                  Add to Cart
+                </>
+              )}
             </button>
           </div>
 
@@ -182,6 +195,7 @@ const ProductCard: React.FC<{ product: Product, onAddToCart: (product: Product, 
 
 const Store: React.FC<StoreProps> = ({ onBack, onAddToCart, onGoToCheckout, cartCount }) => {
   const [showFloatingCart, setShowFloatingCart] = useState(false);
+  const { products, loading } = useProducts();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -216,9 +230,19 @@ const Store: React.FC<StoreProps> = ({ onBack, onAddToCart, onGoToCheckout, cart
 
         <FadeIn>
           <div className="flex flex-col gap-12">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} onAddToCart={onAddToCart} />
-            ))}
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 font-mono text-xs uppercase tracking-widest">Loading Products...</p>
+              </div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 font-mono text-xs uppercase tracking-widest">No products available at this time</p>
+              </div>
+            ) : (
+              products.map((product) => (
+                <ProductCard key={product.id} product={product as Product} onAddToCart={onAddToCart} />
+              ))
+            )}
           </div>
         </FadeIn>
 

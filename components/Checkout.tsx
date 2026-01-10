@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, CreditCard, Truck, ShieldCheck, Lock, CheckCircle2, Package } from 'lucide-react';
+import { ArrowLeft, CreditCard, Truck, ShieldCheck, Lock, CheckCircle2, Package, AlertTriangle } from 'lucide-react';
 import FadeIn from './FadeIn';
 import { CartItem } from '../App';
+import { useInventory } from '../src/hooks/useInventory';
 
 interface CheckoutProps {
   cart: CartItem[];
@@ -35,6 +36,8 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
     zip: '',
     orderNotes: '',
   });
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const { validateCart, finalizeOrder } = useInventory();
 
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const shipping = 15.00;
@@ -49,16 +52,36 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
     return Object.values(requiredFields).every((value: string) => value.trim() !== '');
   };
 
-  const handleInitiatePayment = (e: React.FormEvent) => {
+  const handleInitiatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isFormValid()) {
+      setValidationError(null);
+      
+      // Validate cart inventory before proceeding to payment
+      const validation = await validateCart(cart.map(item => ({ id: item.id, quantity: item.quantity })));
+      
+      if (!validation.valid) {
+        setValidationError('Some items in your cart are no longer available. Please review your cart and try again.');
+        return;
+      }
+      
       setStep('payment');
     }
   };
 
-  const handleVenmoConfirm = () => {
-    onClearCart();
-    setStep('complete');
+  const handleVenmoConfirm = async () => {
+    // Generate order ID
+    const orderId = `DT-${Math.random().toString(36).substring(7).toUpperCase()}`;
+    
+    // Finalize the order (deduct from inventory)
+    const result = await finalizeOrder(orderId);
+    
+    if (result.success) {
+      onClearCart();
+      setStep('complete');
+    } else {
+      setValidationError('Unable to complete order. Please try again.');
+    }
   };
 
   const handleReturnToHome = () => {
@@ -190,6 +213,12 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
                         placeholder="Notes about your order, e.g. special instructions for delivery."
                       />
                     </div>
+                    {validationError && (
+                      <div className="p-3 bg-red-900/20 border border-red-900/30 rounded flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                        <p className="text-xs text-red-400">{validationError}</p>
+                      </div>
+                    )}
                     <button 
                       type="submit" 
                       disabled={!isFormValid()}
