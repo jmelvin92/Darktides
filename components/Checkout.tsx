@@ -73,8 +73,35 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
     // Generate order ID
     const orderId = `DT-${Math.random().toString(36).substring(7).toUpperCase()}`;
     
-    // Finalize the order (deduct from inventory)
-    const result = await finalizeOrder(orderId);
+    // Prepare order data for email notification
+    const customerData = {
+      firstName: shippingData.firstName,
+      lastName: shippingData.lastName,
+      email: shippingData.email,
+      phone: shippingData.phone,
+      address: shippingData.address,
+      city: shippingData.city,
+      state: shippingData.state,
+      zip: shippingData.zip,
+      orderNotes: shippingData.orderNotes
+    };
+
+    const cartItems = cart.map(item => ({
+      id: item.id,
+      name: item.name,
+      sku: item.sku,
+      price: item.price,
+      quantity: item.quantity
+    }));
+
+    const totals = {
+      subtotal,
+      shipping,
+      total
+    };
+    
+    // Finalize the order (deduct from inventory and send email)
+    const result = await finalizeOrder(orderId, customerData, cartItems, totals);
     
     if (result.success) {
       onClearCart();

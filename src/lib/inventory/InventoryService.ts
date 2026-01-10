@@ -128,11 +128,19 @@ class InventoryService {
     };
   }
 
-  async finalizeOrder(orderId: string): Promise<{ success: boolean; message?: string }> {
+  async finalizeOrder(
+    orderId: string, 
+    customerData?: any, 
+    cartItems?: any[], 
+    totals?: any
+  ): Promise<{ success: boolean; message?: string }> {
     try {
       const { data, error } = await (supabase.rpc as any)('finalize_order', {
         p_order_id: orderId,
-        p_session_id: this.sessionId
+        p_session_id: this.sessionId,
+        p_customer_data: customerData || null,
+        p_cart_items: cartItems || null,
+        p_totals: totals || null
       });
 
       if (error) {

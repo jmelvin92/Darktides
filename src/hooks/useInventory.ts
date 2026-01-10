@@ -41,8 +41,13 @@ export function useInventory() {
     return result;
   }, []);
 
-  const finalizeOrder = useCallback(async (orderId: string) => {
-    return await inventoryService.finalizeOrder(orderId);
+  const finalizeOrder = useCallback(async (
+    orderId: string, 
+    customerData?: any, 
+    cartItems?: any[], 
+    totals?: any
+  ) => {
+    return await inventoryService.finalizeOrder(orderId, customerData, cartItems, totals);
   }, []);
 
   return {
