@@ -9,15 +9,17 @@ export function useInventory() {
     setChecking(true);
     console.log('Checking and reserving:', { productId, quantity });
     
-    // First, let's check what products actually exist and their reserved_quantity
+    // Test if we can query the specific product with FOR UPDATE equivalent
     try {
-      const { data: allProducts, error: productsError } = await supabase
+      const { data: specificProduct, error: specificError } = await supabase
         .from('products')
-        .select('id, name, stock_quantity, reserved_quantity')
-        .eq('is_active', true);
-      console.log('All products in database:', allProducts, 'Error:', productsError);
+        .select('id, name, stock_quantity, reserved_quantity, is_active')
+        .eq('id', productId)
+        .eq('is_active', true)
+        .single();
+      console.log('Specific product query:', specificProduct, 'Error:', specificError);
     } catch (e) {
-      console.log('Error fetching products:', e);
+      console.log('Error fetching specific product:', e);
     }
     
     try {
