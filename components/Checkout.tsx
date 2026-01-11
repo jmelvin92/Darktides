@@ -275,7 +275,9 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
                       <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">
                         Total Amount: <span className="text-white font-mono font-bold">${total.toFixed(2)}</span>
                         <br/>
-                        Send transfer to: <span className="text-neon-blue font-mono font-bold">@DarkTidesResearch</span>
+                        Send transfer to: <span className="text-neon-blue font-mono font-bold">@Darktides</span>
+                        <br/>
+                        <span className="text-[10px]">Include a random emoji in payment comments</span>
                       </p>
                     </div>
 
