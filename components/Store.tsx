@@ -206,6 +206,7 @@ const Store: React.FC<StoreProps> = ({ onBack, onAddToCart, onGoToCheckout, cart
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+
   return (
     <section className="pt-32 pb-24 px-6 relative min-h-screen">
       <div className="max-w-7xl mx-auto">

@@ -32,7 +32,7 @@ class InventoryService {
     try {
       const { data: product, error } = await (supabase
         .from('products')
-        .select('stock_quantity, reserved_quantity')
+        .select('stock_quantity')
         .eq('id', productId)
         .eq('is_active', true)
         .single() as any);
@@ -41,10 +41,10 @@ class InventoryService {
         return { available: false, message: 'Product temporarily unavailable' };
       }
 
-      const available = product.stock_quantity - product.reserved_quantity;
+      // Just check stock_quantity directly (reservations disabled)
       return {
-        available: available >= quantity,
-        message: available < quantity ? 'Product temporarily unavailable' : undefined
+        available: product.stock_quantity >= quantity,
+        message: product.stock_quantity < quantity ? 'Product temporarily unavailable' : undefined
       };
     } catch (error) {
       console.error('Inventory check error:', error);
