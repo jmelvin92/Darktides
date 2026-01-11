@@ -31,7 +31,7 @@ interface OrderData {
   created_at: string;
 }
 
-function generateEmailHTML(order: OrderData): string {
+function generateBusinessEmailHTML(order: OrderData): string {
   const itemsHTML = order.items.map(item => `
     <tr style="border-bottom: 1px solid #e5e7eb;">
       <td style="padding: 12px 0; color: #374151; font-weight: 500;">${item.name}</td>
@@ -177,6 +177,153 @@ function generateEmailHTML(order: OrderData): string {
   `;
 }
 
+function generateCustomerEmailHTML(order: OrderData): string {
+  const itemsHTML = order.items.map(item => `
+    <tr style="border-bottom: 1px solid #e5e7eb;">
+      <td style="padding: 12px 0; color: #374151; font-weight: 500;">${item.name}</td>
+      <td style="padding: 12px 0; color: #6b7280; text-align: center;">${item.quantity}</td>
+      <td style="padding: 12px 0; color: #374151; font-weight: 600; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
+    </tr>
+  `).join('');
+
+  const orderDate = new Date(order.created_at).toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  });
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmation - ${order.order_number}</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
+  
+  <!-- Header -->
+  <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+    <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.025em;">🧪 DarkTides Research</h1>
+    <p style="margin: 10px 0 0; font-size: 16px; opacity: 0.9;">Order Confirmation</p>
+  </div>
+
+  <!-- Content -->
+  <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+    
+    <!-- Thank You Message -->
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h2 style="margin: 0 0 15px; font-size: 24px; color: #1e293b;">Thank you for your order!</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;">We've received your order and will process it shortly.</p>
+    </div>
+
+    <!-- Order Summary -->
+    <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+      <h3 style="margin: 0 0 15px; font-size: 18px; color: #1e293b;">📋 Order Details</h3>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span style="font-weight: 600; color: #374151;">Order Number:</span>
+        <span style="font-family: 'Monaco', 'Menlo', monospace; background: #38bdf8; color: white; padding: 4px 8px; border-radius: 4px; font-size: 14px;">${order.order_number}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span style="font-weight: 600; color: #374151;">Order Date:</span>
+        <span style="color: #6b7280;">${orderDate}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span style="font-weight: 600; color: #374151;">Total:</span>
+        <span style="font-weight: 700; color: #059669; font-size: 18px;">$${order.total.toFixed(2)}</span>
+      </div>
+    </div>
+
+    <!-- Shipping Information -->
+    <div style="margin-bottom: 30px;">
+      <h3 style="margin: 0 0 15px; font-size: 18px; color: #1e293b;">📦 Shipping Information</h3>
+      <div style="background: #fafafa; padding: 20px; border-radius: 8px; border-left: 4px solid #38bdf8;">
+        <div style="color: #374151;">
+          <strong>${order.customer_first_name} ${order.customer_last_name}</strong><br>
+          ${order.shipping_address}<br>
+          ${order.shipping_city}, ${order.shipping_state} ${order.shipping_zip}
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Items -->
+    <div style="margin-bottom: 30px;">
+      <h3 style="margin: 0 0 15px; font-size: 18px; color: #1e293b;">🧪 Your Order</h3>
+      <table style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+        <thead>
+          <tr style="background: #f9fafb;">
+            <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb;">Product</th>
+            <th style="padding: 12px; text-align: center; font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb;">Qty</th>
+            <th style="padding: 12px; text-align: right; font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHTML}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Order Totals -->
+    <div style="border-top: 2px solid #e5e7eb; padding-top: 20px; margin-bottom: 30px;">
+      <div style="max-width: 250px; margin-left: auto;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: #6b7280;">Subtotal:</span>
+          <span style="color: #374151;">$${order.subtotal.toFixed(2)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+          <span style="color: #6b7280;">Shipping:</span>
+          <span style="color: #374151;">$${order.shipping_cost.toFixed(2)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; border-top: 1px solid #e5e7eb; padding-top: 12px;">
+          <span style="font-weight: 700; color: #1f2937; font-size: 16px;">Total:</span>
+          <span style="font-weight: 700; color: #059669; font-size: 16px;">$${order.total.toFixed(2)}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Info -->
+    <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+      <h3 style="margin: 0 0 10px; color: #92400e; font-size: 16px;">💳 Payment Information</h3>
+      <p style="margin: 0; color: #92400e; font-size: 14px;">
+        Your order will be processed once we confirm your Venmo payment. Please ensure you included your order number <strong>${order.order_number}</strong> in the payment notes.
+      </p>
+    </div>
+
+    <!-- Next Steps -->
+    <div style="background: #dcfce7; border: 1px solid #22c55e; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 30px;">
+      <h3 style="margin: 0 0 10px; color: #166534;">✅ What's Next?</h3>
+      <p style="margin: 0; color: #166534; font-size: 14px;">We'll confirm your payment and prepare your order for shipping. You'll receive updates on your order status via email.</p>
+    </div>
+
+    <!-- Important Notice -->
+    <div style="background: #fee2e2; border: 1px solid #ef4444; padding: 15px; border-radius: 8px; margin-bottom: 30px;">
+      <p style="margin: 0; color: #dc2626; font-size: 12px; text-align: center; font-weight: 600;">
+        ⚠️ FOR RESEARCH USE ONLY - These products are not intended for human consumption
+      </p>
+    </div>
+
+    <!-- Contact Info -->
+    <div style="text-align: center; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+      <p style="margin: 0 0 10px; color: #6b7280; font-size: 14px;">Questions about your order?</p>
+      <p style="margin: 0; color: #6b7280; font-size: 14px;">Contact us with your order number ${order.order_number}</p>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px;">
+    <p>DarkTides Research | Precision Peptide Research from the Depths</p>
+    <p>This email was sent regarding order ${order.order_number}</p>
+  </div>
+
+</body>
+</html>
+  `;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -200,32 +347,61 @@ serve(async (req) => {
       throw new Error('NOTIFICATION_EMAIL not configured')
     }
 
-    // Send email using Resend
-    const emailResponse = await fetch('https://api.resend.com/emails', {
+    // Send business notification email - TO YOU (business owner)
+    const businessEmailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'DarkTides Research <orders@darktideslab.com>',
-        to: [notificationEmail],
-        subject: `🧪 New Order ${order.order_number} - $${order.total.toFixed(2)}`,
-        html: generateEmailHTML(order),
+        from: 'DarkTides Research <onboarding@resend.dev>',
+        to: [notificationEmail], // This goes TO YOU (business owner)
+        subject: `🧪 NEW ORDER RECEIVED ${order.order_number} - $${order.total.toFixed(2)}`,
+        html: generateBusinessEmailHTML(order),
       }),
     })
 
-    if (!emailResponse.ok) {
-      const error = await emailResponse.text()
-      console.error('Resend API error:', error)
-      throw new Error(`Failed to send email: ${error}`)
+    if (!businessEmailResponse.ok) {
+      const error = await businessEmailResponse.text()
+      console.error('Business email error:', error)
+      throw new Error(`Failed to send business email: ${error}`)
     }
 
-    const result = await emailResponse.json()
-    console.log('Email sent successfully:', result)
+    const businessResult = await businessEmailResponse.json()
+    console.log('Business email sent successfully:', businessResult)
+
+    // Send customer confirmation email - TO CUSTOMER
+    const customerEmailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'DarkTides Research <onboarding@resend.dev>',
+        to: [order.customer_email], // This goes TO THE CUSTOMER
+        subject: `Order Confirmation ${order.order_number} - Thank you for your order!`,
+        html: generateCustomerEmailHTML(order),
+      }),
+    })
+
+    if (!customerEmailResponse.ok) {
+      const error = await customerEmailResponse.text()
+      console.error('Customer email error:', error)
+      // Don't throw error for customer email failure - business email is more important
+      console.log('Customer email failed, but business email succeeded')
+    } else {
+      const customerResult = await customerEmailResponse.json()
+      console.log('Customer email sent successfully:', customerResult)
+    }
 
     return new Response(
-      JSON.stringify({ success: true, emailId: result.id }),
+      JSON.stringify({ 
+        success: true, 
+        businessEmailId: businessResult.id,
+        customerEmailSent: customerEmailResponse.ok
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
