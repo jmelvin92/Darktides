@@ -276,8 +276,6 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
                         Total Amount: <span className="text-white font-mono font-bold">${total.toFixed(2)}</span>
                         <br/>
                         Send transfer to: <span className="text-neon-blue font-mono font-bold">@Darktides</span>
-                        <br/>
-                        <span className="text-[10px]">Include a random emoji in payment comments</span>
                       </p>
                     </div>
 
@@ -285,7 +283,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
                       <div className="flex items-start gap-3 p-4 bg-white/5 border border-white/10 rounded">
                         <ShieldCheck className="w-5 h-5 text-neon-teal shrink-0 mt-0.5" />
                         <p className="text-[10px] text-gray-400 leading-relaxed uppercase tracking-tight">
-                          Your order will be processed once the Venmo transfer is confirmed. Please include your Order ID or Name in the payment notes.
+                          Your order will be processed once the Venmo transfer is confirmed. Please include your name and a random emoji in the payment notes.
                         </p>
                       </div>
                       <button 
