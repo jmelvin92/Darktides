@@ -7,12 +7,9 @@ max_rows = 1000
 
 [auth]
 enabled = true
-port = 54324
 site_url = "http://localhost:3000"
 additional_redirect_urls = ["https://darktideslab.com"]
 jwt_expiry = 3600
-refresh_token_rotation_enabled = true
-security_update_password_require_reauthentication = true
 
 [auth.external.apple]
 enabled = false
@@ -67,27 +64,15 @@ enabled = false
 
 [realtime]
 enabled = true
-port = 54323
-ip_version = "dual"
+ip_version = "IPv4"
 
 [studio]
 enabled = true
-port = 54323
 api_url = "http://127.0.0.1:54321"
-
-[inbucket]
-enabled = true
-port = 54324
-smtp_port = 54325
-pop3_port = 54326
 
 [storage]
 enabled = true
-port = 54321
 file_size_limit = "50MiB"
-file_upload_timeout = "60s"
 
 [edge_runtime]
 enabled = true
-port = 54322
-inspector_port = 54321
