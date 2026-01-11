@@ -6,15 +6,22 @@ This is a React/TypeScript website for DarkTides Research, a peptide research co
 ## Current Features Implemented
 
 ### 1. Inventory Management System (COMPLETED)
-**Status**: ✅ Production-ready
+**Status**: ✅ Production-ready (Simplified - Reservations Disabled)
 **Backend**: Supabase PostgreSQL with real-time subscriptions
 
 #### Key Components:
 - **Real-time stock tracking** - prevents overselling
-- **Cart reservation system** - holds inventory for 30 minutes
-- **Automatic stock deduction** on order completion
+- **Direct stock checking** - no reservations, checks stock_quantity only
+- **Atomic order processing** - row locking prevents race conditions during checkout
 - **Out-of-stock handling** - shows banner, disables buttons (products stay visible)
 - **Admin tools** for inventory management
+
+#### Recent Changes (January 2025):
+- **DISABLED reservation system** to simplify inventory management
+- Stock now checked directly against `stock_quantity` only
+- No more `reserved_quantity` considerations
+- `reserve_inventory()` now just checks availability without reserving
+- `finalize_order()` directly deducts from stock with row locking
 
 #### Core Files:
 ```
@@ -42,22 +49,50 @@ src/admin/
 
 #### Database Schema:
 - `products` - Product catalog with stock tracking
-- `inventory_reservations` - Temporary cart holds (30min expiry)
+- `inventory_reservations` - ⚠️ DEPRECATED (not used since reservations disabled)
 - `orders` - Completed orders
 - `inventory_transactions` - Full audit log
 
-#### Database Functions (Automatic):
-- `reserve_inventory()` - Atomic stock reservation
-- `release_reservation()` - Release expired/cancelled reservations
-- `finalize_order()` - Complete purchase, deduct stock
-- `cleanup_expired_reservations()` - Auto-cleanup
+#### Database Functions (Simplified):
+- `reserve_inventory()` - ✅ Just checks stock availability (no actual reserving)
+- `finalize_order()` - ✅ Complete purchase, deduct stock with row locking
+- ~~`release_reservation()`~~ - ⚠️ DEPRECATED (reservations disabled)
+- ~~`cleanup_expired_reservations()`~~ - ⚠️ DEPRECATED (reservations disabled)
 
-### 2. Key Business Logic
+### 2. Email Notification System (COMPLETED)
+**Status**: ✅ Production-ready
+**Backend**: Supabase Edge Functions + Resend API
+
+#### Key Features:
+- **Business owner notifications** - receives email for every confirmed order
+- **Order details included** - customer info, shipping address, product details
+- **Automated trigger** - fires when order status = 'confirmed'
+- **Resend integration** - uses 'onboarding@resend.dev' sender address
+
+#### Core Files:
+```
+supabase/functions/send-order-email/index.ts  # Edge Function for emails
+src/lib/supabase/migrations/002_orders_and_email.sql  # Enhanced orders table
+```
+
+#### Email Content Includes:
+- Customer name, email, phone, shipping address
+- Complete product list with quantities and prices
+- Order total and subtotal
+- Order ID for tracking
+- Order notes if provided
+
+#### Payment Instructions:
+- **Venmo username**: @Darktides (NOT @DarkTidesResearch)
+- **Payment notes**: Customers must include their name + random emoji
+- **Processing**: Manual verification before fulfillment
+
+### 3. Key Business Logic
 
 #### Checkout Flow (CRITICAL - DO NOT BREAK):
-1. **Add to Cart**: `handleAdd()` in Store.tsx → calls `checkAndReserve()` → reserves stock
-2. **Checkout Validation**: `handleInitiatePayment()` in Checkout.tsx → validates all items
-3. **Payment Complete**: `handleVenmoConfirm()` in Checkout.tsx → calls `finalizeOrder()` → permanently deducts stock
+1. **Add to Cart**: `handleAdd()` in Store.tsx → calls `checkAndReserve()` → checks stock availability only
+2. **Checkout Validation**: `handleInitiatePayment()` in Checkout.tsx → validates all items  
+3. **Payment Complete**: `handleVenmoConfirm()` in Checkout.tsx → calls `finalizeOrder()` → deducts stock with row locking
 
 #### Out-of-Stock Behavior:
 - Products with `stock_quantity = 0` stay visible
@@ -135,9 +170,29 @@ const isOutOfStock = product.stockQuantity === 0;
 ```
 **⚠️ WARNING**: This relies on `stockQuantity` field. Product interface must include this field.
 
+## Adding New Products
+**Process**: Add directly to Supabase database using SQL
+
+#### Example - TESA 10MG Product:
+```sql
+INSERT INTO products (
+  id, name, short_name, dosage, price, old_price, 
+  sku, description, stock_quantity, display_order
+) VALUES (
+  'tesa-10', 'TESA 10mg', 'TESA', '10 MG', 45.00, 75.00,
+  'DT-TESA-010', 
+  'Tesamorelin is a synthetic growth hormone–releasing hormone (GHRH) analog...',
+  10, 5
+);
+```
+
+#### Required SQL Files to Apply:
+1. `apply_migration.sql` - Fix finalize_order function (CRITICAL - apply first)
+2. `add_tesa_product.sql` - Add TESA product
+
 ## Future Features Planned
 
-### Feature #2: [To be documented when implemented]
+### Feature #3: [To be documented when implemented]  
 **Status**: 📋 Not yet started
 
 ## Development Guidelines
@@ -187,9 +242,10 @@ const isOutOfStock = product.stockQuantity === 0;
 - [ ] Verify banner disappears instantly
 
 ## Known Issues & Limitations
-- Reservation expiry (30min) is handled by periodic cleanup, not real-time
-- Admin tool requires manual stock adjustments
+- ~~Reservation expiry~~ - RESOLVED (reservations disabled for simplicity)
+- Admin tool requires manual stock adjustments (or direct SQL)
 - No automated low-stock alerts yet
+- **CRITICAL**: Must apply `apply_migration.sql` before testing checkout
 
 ## Security Notes
 - Uses Supabase Row Level Security (RLS)
