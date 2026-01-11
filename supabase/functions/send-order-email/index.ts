@@ -371,36 +371,12 @@ serve(async (req) => {
     const businessResult = await businessEmailResponse.json()
     console.log('Business email sent successfully:', businessResult)
 
-    // Send customer confirmation email - TO CUSTOMER
-    const customerEmailResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'DarkTides Research <onboarding@resend.dev>',
-        to: [order.customer_email], // This goes TO THE CUSTOMER
-        subject: `Order Confirmation ${order.order_number} - Thank you for your order!`,
-        html: generateCustomerEmailHTML(order),
-      }),
-    })
-
-    if (!customerEmailResponse.ok) {
-      const error = await customerEmailResponse.text()
-      console.error('Customer email error:', error)
-      // Don't throw error for customer email failure - business email is more important
-      console.log('Customer email failed, but business email succeeded')
-    } else {
-      const customerResult = await customerEmailResponse.json()
-      console.log('Customer email sent successfully:', customerResult)
-    }
+    // Customer emails removed - only business notifications for now
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        businessEmailId: businessResult.id,
-        customerEmailSent: customerEmailResponse.ok
+        businessEmailId: businessResult.id
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

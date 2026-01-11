@@ -149,7 +149,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
             <div className="space-y-4">
               <h2 className="text-3xl font-bold text-white uppercase tracking-tighter">Order Received</h2>
               <p className="text-gray-400 text-sm leading-relaxed">
-                Thank you for your order, <span className="text-white font-semibold">{shippingData.firstName}</span>. A confirmation email has been sent to <span className="text-white font-semibold">{shippingData.email}</span>. Please complete your Venmo transfer to finalize your purchase.
+                Thank you for your order, <span className="text-white font-semibold">{shippingData.firstName}</span>. Your order has been received and will be processed once we confirm your Venmo payment.
               </p>
             </div>
             <div className="p-4 bg-white/5 border border-white/10 rounded font-mono text-[10px] text-gray-500 uppercase tracking-widest">
