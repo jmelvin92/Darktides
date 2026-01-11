@@ -135,6 +135,14 @@ class InventoryService {
     totals?: any
   ): Promise<{ success: boolean; message?: string }> {
     try {
+      console.log('Finalizing order with data:', { 
+        orderId, 
+        customerData, 
+        cartItems, 
+        totals,
+        sessionId: this.sessionId 
+      });
+
       const { data, error } = await (supabase.rpc as any)('finalize_order', {
         p_order_id: orderId,
         p_session_id: this.sessionId,
@@ -142,6 +150,8 @@ class InventoryService {
         p_cart_items: cartItems || null,
         p_totals: totals || null
       });
+
+      console.log('Finalize order response:', { data, error });
 
       if (error) {
         console.error('Finalize order error:', error);
