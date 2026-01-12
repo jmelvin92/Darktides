@@ -261,6 +261,44 @@ INSERT INTO products (
 
 ---
 
+## Discount Code Management
+
+### When user says "add discount code", ask for:
+1. **Code name** (e.g., SARAH20, FITNESS15)
+2. **Affiliate/Description** (e.g., Instagram - @sarahfitness)
+3. **Discount type** (percentage or fixed dollar amount)
+4. **Discount value** (e.g., 20 for 20% off, or 10 for $10 off)
+
+### Then provide this SQL:
+```sql
+INSERT INTO discount_codes (code, description, discount_type, discount_value)
+VALUES ('[CODE]', '[DESCRIPTION]', '[TYPE]', [VALUE]);
+```
+
+### Example:
+- Code: PEPTIDE20
+- Affiliate: Instagram - @peptideexpert
+- Type: percentage
+- Value: 20
+
+**SQL Output:**
+```sql
+INSERT INTO discount_codes (code, description, discount_type, discount_value)
+VALUES ('PEPTIDE20', 'Instagram - @peptideexpert', 'percentage', 20);
+```
+
+### Other useful commands:
+```sql
+-- View all codes
+SELECT * FROM discount_codes ORDER BY created_at DESC;
+
+-- Disable a code
+UPDATE discount_codes SET is_active = false WHERE code = 'CODENAME';
+
+-- Check usage
+SELECT code, description, usage_count FROM discount_codes WHERE code = 'CODENAME';
+```
+
 ## Contact Information
 **Project**: DarkTides Research Website  
 **Tech Stack**: React, TypeScript, Vite, Supabase  
