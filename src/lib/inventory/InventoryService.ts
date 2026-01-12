@@ -128,6 +128,42 @@ class InventoryService {
     };
   }
 
+  async validateDiscountCode(code: string, subtotal: number): Promise<{
+    valid: boolean;
+    discountType?: 'percentage' | 'fixed';
+    discountValue?: number;
+    discountAmount?: number;
+    message?: string;
+  }> {
+    try {
+      const { data, error } = await (supabase.rpc as any)('validate_discount_code', {
+        p_code: code,
+        p_subtotal: subtotal
+      });
+
+      if (error) {
+        console.error('Discount validation error:', error);
+        return { valid: false, message: 'Unable to validate discount code' };
+      }
+
+      if (!data || data.length === 0) {
+        return { valid: false, message: 'Invalid discount code' };
+      }
+
+      const result = data[0];
+      return {
+        valid: result.valid,
+        discountType: result.discount_type,
+        discountValue: result.discount_value,
+        discountAmount: result.discount_amount,
+        message: result.message
+      };
+    } catch (error) {
+      console.error('Discount validation error:', error);
+      return { valid: false, message: 'Unable to validate discount code' };
+    }
+  }
+
   async finalizeOrder(
     orderId: string, 
     customerData?: any, 

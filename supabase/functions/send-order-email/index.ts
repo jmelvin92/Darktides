@@ -21,6 +21,8 @@ interface OrderData {
   subtotal: number;
   shipping_cost: number;
   total: number;
+  discount_code?: string;
+  discount_amount?: number;
   items: Array<{
     id: string;
     name: string;
@@ -85,6 +87,11 @@ function generateBusinessEmailHTML(order: OrderData): string {
         <span style="font-weight: 600; color: #374151;">Order Total:</span>
         <span style="font-weight: 700; color: #059669; font-size: 18px;">$${order.total.toFixed(2)}</span>
       </div>
+      ${order.discount_code ? `
+      <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+        <span style="font-weight: 600; color: #374151;">Discount Code:</span>
+        <span style="background: #fbbf24; color: #451a03; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 12px; font-weight: bold;">${order.discount_code}</span>
+      </div>` : ''}
     </div>
 
     <!-- Customer Information -->
@@ -138,10 +145,15 @@ function generateBusinessEmailHTML(order: OrderData): string {
           <span style="color: #6b7280;">Subtotal:</span>
           <span style="color: #374151;">$${order.subtotal.toFixed(2)}</span>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
           <span style="color: #6b7280;">Shipping:</span>
           <span style="color: #374151;">$${order.shipping_cost.toFixed(2)}</span>
         </div>
+        ${order.discount_amount && order.discount_amount > 0 ? `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+          <span style="color: #22c55e;">Discount${order.discount_code ? ` (${order.discount_code})` : ''}:</span>
+          <span style="color: #22c55e;">-$${order.discount_amount.toFixed(2)}</span>
+        </div>` : ''}
         <div style="display: flex; justify-content: space-between; border-top: 1px solid #e5e7eb; padding-top: 12px;">
           <span style="font-weight: 700; color: #1f2937; font-size: 18px;">Total:</span>
           <span style="font-weight: 700; color: #059669; font-size: 18px;">$${order.total.toFixed(2)}</span>

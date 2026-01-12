@@ -4,6 +4,7 @@ import { ArrowLeft, CreditCard, Truck, ShieldCheck, Lock, CheckCircle2, Package,
 import FadeIn from './FadeIn';
 import { CartItem } from '../App';
 import { useInventory } from '../src/hooks/useInventory';
+import { inventoryService } from '../src/lib/inventory/InventoryService';
 
 interface CheckoutProps {
   cart: CartItem[];
@@ -37,14 +38,54 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
     orderNotes: '',
   });
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [discountCode, setDiscountCode] = useState('');
+  const [discountApplied, setDiscountApplied] = useState<{
+    code: string;
+    type: 'percentage' | 'fixed';
+    value: number;
+    amount: number;
+  } | null>(null);
+  const [discountError, setDiscountError] = useState<string | null>(null);
+  const [checkingDiscount, setCheckingDiscount] = useState(false);
   const { validateCart, finalizeOrder } = useInventory();
 
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const shipping = 15.00;
-  const total = subtotal + shipping;
+  const discountAmount = discountApplied?.amount || 0;
+  const total = subtotal + shipping - discountAmount;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setShippingData({ ...shippingData, [e.target.name]: e.target.value });
+  };
+
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) return;
+    
+    setCheckingDiscount(true);
+    setDiscountError(null);
+    
+    const result = await inventoryService.validateDiscountCode(discountCode, subtotal);
+    
+    if (result.valid && result.discountAmount) {
+      setDiscountApplied({
+        code: discountCode.toUpperCase(),
+        type: result.discountType as 'percentage' | 'fixed',
+        value: result.discountValue || 0,
+        amount: result.discountAmount
+      });
+      setDiscountError(null);
+    } else {
+      setDiscountError(result.message || 'Invalid discount code');
+      setDiscountApplied(null);
+    }
+    
+    setCheckingDiscount(false);
+  };
+
+  const handleRemoveDiscount = () => {
+    setDiscountApplied(null);
+    setDiscountCode('');
+    setDiscountError(null);
   };
 
   const isFormValid = () => {
@@ -97,7 +138,9 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
     const totals = {
       subtotal,
       shipping,
-      total
+      total,
+      discount_code: discountApplied?.code || null,
+      discount_amount: discountApplied?.amount || 0
     };
     
     // Finalize the order (deduct from inventory and send email)
@@ -240,6 +283,47 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
                         placeholder="Notes about your order, e.g. special instructions for delivery."
                       />
                     </div>
+                    <div className="space-y-2">
+                      <RequiredLabel required={false}>Discount Code</RequiredLabel>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={discountCode}
+                          onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                          placeholder="ENTER CODE"
+                          disabled={discountApplied !== null}
+                          className="flex-1 bg-white/5 border border-white/10 p-3 text-white focus:outline-none focus:border-neon-blue transition-all font-mono uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                        {!discountApplied ? (
+                          <button
+                            type="button"
+                            onClick={handleApplyDiscount}
+                            disabled={checkingDiscount || !discountCode.trim()}
+                            className="px-6 py-3 bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all font-mono text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {checkingDiscount ? 'Checking...' : 'Apply'}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleRemoveDiscount}
+                            className="px-6 py-3 bg-red-900/20 border border-red-900/30 text-red-400 hover:bg-red-900/30 transition-all font-mono text-xs uppercase tracking-wider"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      {discountApplied && (
+                        <p className="text-xs text-green-400 font-mono">
+                          ✓ Code {discountApplied.code} applied - {discountApplied.type === 'percentage' ? `${discountApplied.value}% off` : `$${discountApplied.value} off`}
+                        </p>
+                      )}
+                      {discountError && (
+                        <p className="text-xs text-red-400 font-mono">
+                          {discountError}
+                        </p>
+                      )}
+                    </div>
                     {validationError && (
                       <div className="p-3 bg-red-900/20 border border-red-900/30 rounded flex items-start gap-2">
                         <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
@@ -354,6 +438,12 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
                     <span>Shipping <span className="text-[8px] italic opacity-50">(Standard Cold-Chain)</span></span>
                     <span className="text-white">${shipping.toFixed(2)}</span>
                   </div>
+                  {discountApplied && (
+                    <div className="flex justify-between text-green-400">
+                      <span>Discount ({discountApplied.code})</span>
+                      <span>-${discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="pt-4 mt-4 border-t border-white/10">
                     <div className="flex justify-between items-center text-neon-blue">
                       <span className="text-xs font-bold">Total Due</span>
