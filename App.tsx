@@ -11,10 +11,9 @@ import Philosophy from './components/Philosophy';
 import Footer from './components/Footer';
 import AgeVerification from './components/AgeVerification';
 import Checkout from './components/Checkout';
-import DiscountManager from './components/admin/DiscountManager';
 import { BrandTheme } from './theme';
 
-export type ViewState = 'home' | 'store' | 'checkout' | 'admin-discounts';
+export type ViewState = 'home' | 'store' | 'checkout';
 
 export interface CartItem {
   id: string;
@@ -26,13 +25,6 @@ export interface CartItem {
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewState>('home');
-  
-  // Check for admin route on mount
-  useEffect(() => {
-    if (window.location.pathname === '/admin/discounts') {
-      setCurrentView('admin-discounts');
-    }
-  }, []);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [cart, setCart] = useState<CartItem[]>([]);
 
@@ -87,9 +79,7 @@ function App() {
       
       <WaveBackground />
       <GridBackground />
-      {currentView !== 'admin-discounts' && (
-        <Navigation currentView={currentView} onNavigate={handleNavigate} cartCount={cartCount} />
-      )}
+      <Navigation currentView={currentView} onNavigate={handleNavigate} cartCount={cartCount} />
       
       <main className="relative z-10 flex flex-col gap-0 min-h-screen">
         {currentView === 'home' ? (
@@ -106,23 +96,16 @@ function App() {
             onGoToCheckout={() => handleNavigate('checkout')}
             cartCount={cartCount}
           />
-        ) : currentView === 'checkout' ? (
+        ) : (
           <Checkout 
             cart={cart} 
             onBack={() => handleNavigate('store')}
             onClearCart={() => setCart([])}
           />
-        ) : currentView === 'admin-discounts' ? (
-          <DiscountManager 
-            onBack={() => {
-              window.history.pushState({}, '', '/');
-              handleNavigate('home');
-            }}
-          />
-        ) : null}
+        )}
       </main>
 
-      {currentView !== 'admin-discounts' && <Footer />}
+      <Footer />
     </div>
   );
 }
