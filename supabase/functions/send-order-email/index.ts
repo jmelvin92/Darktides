@@ -65,6 +65,15 @@ function generateBusinessEmailHTML(order: OrderData): string {
   
   <!-- Header -->
   <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+    <!-- DarkTides Logo SVG -->
+    <div style="margin: 0 auto 15px; width: 60px; height: 60px;">
+      <svg viewBox="0 0 100 100" fill="none" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" style="width: 100%; height: 100%;">
+        <circle cx="50" cy="50" r="45" />
+        <path d="M25 45 C 40 35, 50 35, 60 45 S 80 45, 80 40" />
+        <path d="M25 60 C 40 50, 50 50, 60 60 S 80 60, 80 55" />
+        <path d="M35 75 C 45 70, 55 70, 65 75" />
+      </svg>
+    </div>
     <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.025em;">🧪 DarkTides Research</h1>
     <p style="margin: 10px 0 0; font-size: 16px; opacity: 0.9;">New Order Received</p>
   </div>
