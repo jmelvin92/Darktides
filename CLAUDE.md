@@ -114,8 +114,9 @@ VITE_SUPABASE_ANON_KEY=eyJ[long-jwt-token]
 ```
 
 #### NPM Scripts:
-- `npm run dev` - Development server
-- `npm run build` - Production build  
+- `npm run dev` - Development server (http://localhost:5173)
+- `npm run build` - Production build to /dist folder
+- `npm run deploy` - Deploy to GitHub Pages (builds first)
 - `npm run admin` - CLI inventory management tool
 
 #### Supabase Setup:
@@ -192,7 +193,8 @@ INSERT INTO products (
 
 ### 4. Web-Based Admin Panel (COMPLETED)
 **Status**: ✅ Production-ready
-**Access**: `/admin` route with PIN authentication (PIN: 2468)
+**Access**: `/admin` route - Supabase authentication (email/password)
+**URL**: `darktideslab.com/admin`
 
 #### Key Features:
 - **Order Management** - View all orders, mark as shipped/completed
@@ -203,21 +205,25 @@ INSERT INTO products (
 
 #### Core Files:
 ```
-src/pages/Admin/
-├── AdminLogin.tsx           # PIN authentication screen
-├── AdminDashboard.tsx       # Main admin interface
-├── components/
-│   ├── OrdersTab.tsx       # Order management
-│   ├── InventoryTab.tsx    # Stock management
-│   ├── DiscountTab.tsx     # Discount code management
-│   └── AnalyticsTab.tsx    # Sales analytics
+src/components/admin/
+├── AdminLogin.tsx           # Supabase authentication screen
+├── AdminPanel.tsx           # Main admin interface with tabs
+├── AdminDashboard.tsx       # Analytics overview
+├── AdminOrders.tsx          # Order management
+├── AdminProducts.tsx        # Inventory management
+├── AdminDiscounts.tsx       # Discount code management
+└── ProtectedRoute.tsx       # Route protection wrapper
+
+src/contexts/
+└── AuthContext.tsx          # Supabase auth context
 ```
 
-#### Security:
-- PIN-based authentication (PIN: 2468)
-- Session persists in localStorage
-- Protected route redirects to login if not authenticated
-- No sensitive operations exposed to client
+#### Authentication:
+- **Supabase Auth** - Email/password login for admin users
+- Admin users must be granted access in Supabase (is_admin flag)
+- Session persists based on "Remember Me" checkbox
+- Protected routes redirect to login if not authenticated
+- No PIN required (was initially 2468 but removed per user preference)
 
 #### Admin Panel Sections:
 1. **Orders Tab**:
@@ -353,10 +359,34 @@ UPDATE discount_codes SET is_active = false WHERE code = 'CODENAME';
 SELECT code, description, usage_count FROM discount_codes WHERE code = 'CODENAME';
 ```
 
+## Deployment Information
+
+### GitHub Pages Deployment
+**Live Site**: darktideslab.com  
+**Admin Panel**: darktideslab.com/admin
+
+#### Deployment Process:
+```bash
+npm run build    # Build production files
+npm run deploy   # Deploy to GitHub Pages
+```
+
+#### GitHub Pages Configuration:
+- Uses `gh-pages` branch for deployment
+- Includes 404.html redirect for SPA routing
+- Client-side routing handled via redirect scripts
+- Environment variables must be set in build environment
+
+#### Required Files for GitHub Pages:
+- `public/404.html` - Handles SPA routing redirects
+- `vercel.json` - For Vercel deployment (alternative)
+- `public/_redirects` - For Netlify deployment (alternative)
+
 ## Contact Information
 **Project**: DarkTides Research Website  
-**Tech Stack**: React, TypeScript, Vite, Supabase  
-**Domain**: [To be deployed]
+**Tech Stack**: React, TypeScript, Vite, Supabase, Tailwind CSS (CDN)  
+**Domain**: darktideslab.com  
+**Repository**: github.com/jmelvin92/Darktides
 
 ---
 
