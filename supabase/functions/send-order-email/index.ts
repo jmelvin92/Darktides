@@ -384,7 +384,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: 'DarkTides Research <onboarding@resend.dev>',
         to: [notificationEmail], // This goes TO YOU (business owner)
-        subject: `🧪 NEW ORDER RECEIVED ${order.order_number} - $${order.total.toFixed(2)}`,
+        subject: `🔥🔥 - NEW ORDER RECEIVED ${order.order_number} - $${order.total.toFixed(2)} 🔥🔥`,
         html: generateBusinessEmailHTML(order),
       }),
     })

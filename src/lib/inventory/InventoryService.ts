@@ -171,6 +171,7 @@ class InventoryService {
     totals?: any
   ): Promise<{ success: boolean; message?: string }> {
     try {
+      console.log('🔥 SERVICE Received orderId:', orderId);
       console.log('Finalizing order with data:', { 
         orderId, 
         customerData, 
@@ -187,6 +188,10 @@ class InventoryService {
         p_totals: totals || null
       });
 
+      console.log('🔥 SERVICE Database call parameters:', {
+        p_order_id: orderId,
+        p_session_id: this.sessionId,
+      });
       console.log('Finalize order response:', { data, error });
 
       if (error) {
@@ -198,7 +203,11 @@ class InventoryService {
       sessionStorage.removeItem('darktides_session_id');
       this.sessionId = this.getOrCreateSessionId();
 
-      return { success: true };
+      // Return the actual order ID from database
+      return { 
+        success: true, 
+        orderId: data && data[0] ? data[0].message : orderId 
+      };
     } catch (error) {
       console.error('Finalize order error:', error);
       return { success: false, message: 'Unable to complete order' };

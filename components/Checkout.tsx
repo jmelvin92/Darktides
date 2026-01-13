@@ -26,6 +26,7 @@ interface ShippingData {
 
 const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
   const [step, setStep] = useState<'shipping' | 'payment' | 'complete'>('shipping');
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [shippingData, setShippingData] = useState<ShippingData>({
     firstName: '',
     lastName: '',
@@ -111,8 +112,9 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
   };
 
   const handleVenmoConfirm = async () => {
-    // Generate order ID
-    const orderId = `DT-${Math.random().toString(36).substring(7).toUpperCase()}`;
+    // Generate a single order ID for everything
+    const finalOrderId = `DT-${Math.random().toString(36).substring(7).toUpperCase()}`;
+    console.log('🔥 FRONTEND Generated Order ID:', finalOrderId);
     
     // Prepare order data for email notification
     const customerData = {
@@ -144,9 +146,14 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
     };
     
     // Finalize the order (deduct from inventory and send email)
-    const result = await finalizeOrder(orderId, customerData, cartItems, totals);
+    console.log('🔥 FRONTEND Calling finalizeOrder with ID:', finalOrderId);
+    const result = await finalizeOrder(finalOrderId, customerData, cartItems, totals);
+    console.log('🔥 FRONTEND finalizeOrder result:', result);
     
     if (result.success) {
+      // Set the order ID in state AFTER successful database call
+      setOrderId(finalOrderId);
+      console.log('🔥 FRONTEND Set state order ID:', finalOrderId);
       onClearCart();
       setStep('complete');
     } else {
@@ -196,7 +203,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
               </p>
             </div>
             <div className="p-4 bg-white/5 border border-white/10 rounded font-mono text-[10px] text-gray-500 uppercase tracking-widest">
-              Order ID: DT-{Math.random().toString(36).substring(7).toUpperCase()} // Status: Awaiting Payment
+              Order ID: {orderId || 'Loading...'} // Status: Awaiting Payment
             </div>
             <button 
               onClick={handleReturnToHome} 
