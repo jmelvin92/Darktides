@@ -206,7 +206,7 @@ class InventoryService {
       // Return the actual order ID from database
       return { 
         success: true, 
-        orderId: data && data[0] ? data[0].message : orderId 
+        message: data && data[0] ? data[0].message : `Order ${orderId} completed successfully`
       };
     } catch (error) {
       console.error('Finalize order error:', error);

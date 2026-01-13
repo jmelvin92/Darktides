@@ -58,12 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set session persistence based on rememberMe
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password,
-      options: {
-        // If rememberMe is true, keep session for 30 days, otherwise 24 hours
-        persistSession: true,
-        // Store session in localStorage if rememberMe, otherwise sessionStorage
-      }
+      password
     });
     
     if (!error && data.user) {

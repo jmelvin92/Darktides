@@ -21,7 +21,7 @@ function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const updateTimeouts = useRef<Record<string, NodeJS.Timeout>>({});
+  const updateTimeouts = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   
   // Form state for add/edit
   const [formData, setFormData] = useState<Partial<Product>>({
