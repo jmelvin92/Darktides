@@ -1,20 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase/client';
 import { Plus, Edit2, Trash2, AlertCircle } from 'lucide-react';
-
-interface Product {
-  id: string;
-  name: string;
-  short_name: string;
-  dosage: string;
-  price: number;
-  old_price?: number;
-  stock_quantity: number;
-  sku: string;
-  description: string;
-  is_active: boolean;
-  display_order: number;
-}
+import type { Product } from '../../lib/supabase/database.types';
 
 function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -57,7 +44,7 @@ function AdminProducts() {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .order('display_order');
+      .order('display_order') as any;
     
     if (!error && data) {
       setProducts(data);
@@ -70,8 +57,8 @@ function AdminProducts() {
     
     // Don't update UI here since it's already updated in onChange
     
-    const { data, error } = await supabase
-      .from('products')
+    const { data, error } = await (supabase
+      .from('products') as any)
       .update({ stock_quantity: newQuantity })
       .eq('id', productId)
       .select();
@@ -86,15 +73,15 @@ function AdminProducts() {
       // Update with the confirmed data from database
       if (data && data[0]) {
         setProducts(prev => prev.map(p => 
-          p.id === productId ? { ...p, ...data[0] } : p
+          p.id === productId ? { ...p, ...(data[0] as Product) } : p
         ));
       }
     }
   };
 
   const toggleActive = async (productId: string, isActive: boolean) => {
-    const { error } = await supabase
-      .from('products')
+    const { error } = await (supabase
+      .from('products') as any)
       .update({ is_active: !isActive })
       .eq('id', productId);
 
@@ -160,8 +147,8 @@ function AdminProducts() {
   const handleSubmit = async () => {
     if (editingProduct) {
       // Update existing product
-      const { error } = await supabase
-        .from('products')
+      const { error } = await (supabase
+        .from('products') as any)
         .update(formData)
         .eq('id', editingProduct.id);
 
@@ -179,8 +166,8 @@ function AdminProducts() {
         id: `${formData.short_name?.toLowerCase()}-${Date.now()}`,
       };
       
-      const { error } = await supabase
-        .from('products')
+      const { error } = await (supabase
+        .from('products') as any)
         .insert([newProduct]);
 
       if (error) {

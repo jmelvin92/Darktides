@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
 import { Package, ShoppingCart, DollarSign, TrendingUp } from 'lucide-react';
+import type { Product, Order } from '../../lib/supabase/database.types';
 
 interface DashboardStats {
   totalProducts: number;
@@ -16,7 +17,7 @@ function AdminDashboard() {
     totalRevenue: 0,
     lowStockProducts: 0,
   });
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,18 +29,18 @@ function AdminDashboard() {
       // Load products stats
       const { data: products } = await supabase
         .from('products')
-        .select('stock_quantity, is_active');
+        .select('stock_quantity, is_active') as any;
       
-      const activeProducts = products?.filter(p => p.is_active) || [];
-      const lowStock = activeProducts.filter(p => p.stock_quantity < 5);
+      const activeProducts = products?.filter((p: any) => p.is_active) || [];
+      const lowStock = activeProducts.filter((p: any) => p.stock_quantity < 5);
 
       // Load orders stats
       const { data: orders } = await supabase
         .from('orders')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as any;
 
-      const totalRevenue = orders?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
+      const totalRevenue = orders?.reduce((sum: number, order: any) => sum + (order.total || 0), 0) || 0;
 
       // Get recent orders
       const recent = orders?.slice(0, 5) || [];
@@ -150,7 +151,7 @@ function AdminDashboard() {
                       {order.order_number || order.id.slice(0, 8)}
                     </td>
                     <td className="py-3 text-sm text-gray-300">
-                      {order.customer_name || 'N/A'}
+                      {(order.customer_data as any)?.name || 'N/A'}
                     </td>
                     <td className="py-3 text-sm text-white">
                       ${(order.total || 0).toFixed(2)}

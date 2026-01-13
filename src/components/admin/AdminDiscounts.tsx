@@ -1,17 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
 import { Plus, Edit2, Trash2, Copy, Check } from 'lucide-react';
-
-interface DiscountCode {
-  id: string;
-  code: string;
-  description: string;
-  discount_type: 'percentage' | 'fixed';
-  discount_value: number;
-  is_active: boolean;
-  usage_count: number;
-  created_at: string;
-}
+import type { DiscountCode } from '../../lib/supabase/database.types';
 
 function AdminDiscounts() {
   const [discounts, setDiscounts] = useState<DiscountCode[]>([]);
@@ -37,7 +27,7 @@ function AdminDiscounts() {
     const { data, error } = await supabase
       .from('discount_codes')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false }) as any;
     
     console.log('Loaded discounts:', data);
     
@@ -53,8 +43,8 @@ function AdminDiscounts() {
     console.log('Submitting discount code:', formData);
     
     if (editingDiscount) {
-      const { error } = await supabase
-        .from('discount_codes')
+      const { error } = await (supabase
+        .from('discount_codes') as any)
         .update({
           code: formData.code,
           description: formData.description,
@@ -73,8 +63,8 @@ function AdminDiscounts() {
         loadDiscounts();
       }
     } else {
-      const { data, error } = await supabase
-        .from('discount_codes')
+      const { data, error } = await (supabase
+        .from('discount_codes') as any)
         .insert([formData]);
 
       if (error) {
@@ -100,8 +90,8 @@ function AdminDiscounts() {
   };
 
   const toggleActive = async (discountId: string, isActive: boolean) => {
-    const { error } = await supabase
-      .from('discount_codes')
+    const { error } = await (supabase
+      .from('discount_codes') as any)
       .update({ is_active: !isActive })
       .eq('id', discountId);
 
@@ -148,7 +138,7 @@ function AdminDiscounts() {
   const openEditModal = (discount: DiscountCode) => {
     setFormData({
       code: discount.code,
-      description: discount.description,
+      description: discount.description || '',
       discount_type: discount.discount_type,
       discount_value: discount.discount_value,
       is_active: discount.is_active,

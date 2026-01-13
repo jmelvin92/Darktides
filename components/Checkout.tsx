@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, CreditCard, Truck, ShieldCheck, Lock, CheckCircle2, Package, AlertTriangle } from 'lucide-react';
 import FadeIn from './FadeIn';
-import { CartItem } from '../src/App';
+import { CartItem } from '../src/components/MainSite';
 import { useInventory } from '../src/hooks/useInventory';
 import { inventoryService } from '../src/lib/inventory/InventoryService';
 

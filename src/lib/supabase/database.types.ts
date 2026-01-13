@@ -233,3 +233,4 @@ export type ProductUpdate = Database['public']['Tables']['products']['Update'];
 
 export type Reservation = Database['public']['Tables']['inventory_reservations']['Row'];
 export type Order = Database['public']['Tables']['orders']['Row'];
+export type DiscountCode = Database['public']['Tables']['discount_codes']['Row'];

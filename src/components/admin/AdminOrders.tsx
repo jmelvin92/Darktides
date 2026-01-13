@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
 import { Eye, Download, Check, X } from 'lucide-react';
+import type { Order as OrderType } from '../../lib/supabase/database.types';
 
+// Parse the JSON fields from the database order
 interface Order {
   id: string;
   order_number: string;
@@ -44,7 +46,7 @@ function AdminOrders() {
 
   const loadOrders = async () => {
     console.log('Loading orders...');
-    let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
+    let query = supabase.from('orders').select('*').order('created_at', { ascending: false }) as any;
 
     const { data, error } = await query;
     
@@ -55,14 +57,36 @@ function AdminOrders() {
       alert(`Error loading orders: ${error.message}`);
     } else if (data) {
       console.log(`Loaded ${data.length} orders`);
-      setOrders(data);
+      // Parse the JSON fields from database
+      const parsedOrders = data.map((order: OrderType) => {
+        const customerData = order.customer_data as any || {};
+        const items = order.items as any[] || [];
+        return {
+          id: order.id,
+          order_number: order.order_number,
+          customer_name: customerData.name || '',
+          customer_email: customerData.email || '',
+          customer_phone: customerData.phone || '',
+          shipping_address: customerData.shipping_address || '',
+          items: items,
+          subtotal: customerData.subtotal || 0,
+          shipping: customerData.shipping || 0,
+          discount_amount: customerData.discount_amount || 0,
+          discount_code: customerData.discount_code || '',
+          total: order.total,
+          status: order.status,
+          notes: customerData.notes || '',
+          created_at: order.created_at,
+        };
+      });
+      setOrders(parsedOrders);
     }
     setLoading(false);
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
-    const { error } = await supabase
-      .from('orders')
+    const { error } = await (supabase
+      .from('orders') as any)
       .update({ status: newStatus })
       .eq('id', orderId);
 
