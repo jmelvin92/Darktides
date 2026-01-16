@@ -113,23 +113,23 @@ function AdminPanel() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col relative">
+      <div className="flex-1 flex flex-col relative lg:ml-0">
         {/* Top bar */}
-        <div className="bg-charcoal/50 backdrop-blur-md border-b border-neon-blue/10 px-6 py-4 flex items-center lg:hidden">
+        <div className="bg-charcoal/50 backdrop-blur-md border-b border-neon-blue/10 px-4 py-3 flex items-center lg:hidden">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-gray-400 hover:text-neon-blue transition-colors"
+            className="text-gray-400 hover:text-neon-blue transition-colors p-1"
           >
             <Menu size={24} />
           </button>
-          <div className="ml-4 flex items-center space-x-2">
+          <div className="ml-3 flex items-center space-x-2">
             <Logo className="w-6 h-6" />
-            <h1 className="text-lg font-bold text-white tracking-wider">DARKTIDES</h1>
+            <h1 className="text-base font-bold text-white tracking-wider">DARKTIDES</h1>
           </div>
         </div>
 
         {/* Page content with subtle grid background */}
-        <main className="flex-1 p-6 relative">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 relative overflow-x-hidden">
           <div className="absolute inset-0 opacity-[0.02]">
             <div className="h-full w-full" style={{
               backgroundImage: `linear-gradient(rgba(56, 189, 248, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 189, 248, 0.1) 1px, transparent 1px)`,

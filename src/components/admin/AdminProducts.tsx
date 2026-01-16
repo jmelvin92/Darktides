@@ -185,23 +185,23 @@ function AdminProducts() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-white">Products</h1>
-          <p className="text-gray-400 mt-1">Manage your product inventory</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-white">Products</h1>
+          <p className="text-sm md:text-base text-gray-400 mt-1">Manage your product inventory</p>
         </div>
         <button
           onClick={openAddModal}
-          className="flex items-center space-x-2 px-4 py-2 bg-neon-blue text-obsidian font-semibold rounded-lg hover:bg-neon-blue/90 transition-colors"
+          className="flex items-center justify-center space-x-2 px-3 py-2 md:px-4 md:py-2 bg-neon-blue text-obsidian font-semibold rounded-lg hover:bg-neon-blue/90 transition-colors text-sm md:text-base"
         >
-          <Plus size={20} />
+          <Plus size={18} className="md:w-5 md:h-5" />
           <span>Add Product</span>
         </button>
       </div>
 
-      {/* Products Table */}
-      <div className="bg-charcoal border border-gray-800 rounded-lg overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-charcoal border border-gray-800 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-900">
@@ -300,17 +300,80 @@ function AdminProducts() {
         </div>
       </div>
 
+      {/* Mobile Cards View */}
+      <div className="md:hidden space-y-3">
+        {products.map((product) => (
+          <div key={product.id} className="bg-charcoal border border-gray-800 rounded-lg p-4">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-white">{product.name}</p>
+                <p className="text-xs text-gray-400">{product.dosage}</p>
+                <p className="text-xs text-gray-500 font-mono mt-1">{product.sku}</p>
+              </div>
+              <button
+                onClick={() => toggleActive(product.id, product.is_active)}
+                className={`text-xs px-2 py-1 rounded-full ${
+                  product.is_active
+                    ? 'bg-green-500/20 text-green-400'
+                    : 'bg-red-500/20 text-red-400'
+                }`}
+              >
+                {product.is_active ? 'Active' : 'Inactive'}
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <p className="text-xs text-gray-400">Price</p>
+                <p className="text-sm text-white">${product.price}</p>
+                {product.old_price && (
+                  <p className="text-xs text-gray-500 line-through">${product.old_price}</p>
+                )}
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">Stock</p>
+                <div className="flex items-center space-x-1">
+                  <span className="text-sm text-white font-mono">{product.stock_quantity}</span>
+                  {product.stock_quantity < 5 && product.stock_quantity > 0 && (
+                    <AlertCircle className="text-yellow-400" size={14} />
+                  )}
+                  {product.stock_quantity === 0 && (
+                    <AlertCircle className="text-red-400" size={14} />
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex space-x-2">
+              <button
+                onClick={() => openEditModal(product)}
+                className="flex-1 py-2 bg-gray-800 text-gray-300 text-sm rounded hover:bg-gray-700 transition-colors flex items-center justify-center space-x-1"
+              >
+                <Edit2 size={14} />
+                <span>Edit</span>
+              </button>
+              <button
+                onClick={() => deleteProduct(product.id)}
+                className="px-3 py-2 bg-gray-800 text-red-400 text-sm rounded hover:bg-gray-700 transition-colors"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Add/Edit Modal */}
       {(showAddModal || editingProduct) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-charcoal border border-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-semibold text-white mb-4">
+          <div className="bg-charcoal border border-gray-800 rounded-lg p-4 md:p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+            <h2 className="text-lg md:text-xl font-semibold text-white mb-4">
               {editingProduct ? 'Edit Product' : 'Add Product'}
             </h2>
             
             <div className="space-y-4">
               {/* Row 1: Name and Short Name */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Product Name
@@ -346,7 +409,7 @@ function AdminProducts() {
               </div>
 
               {/* Row 2: Dosage and SKU */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Dosage
@@ -388,7 +451,7 @@ function AdminProducts() {
               </div>
 
               {/* Row 3: Prices */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Current Price ($)
@@ -442,7 +505,7 @@ function AdminProducts() {
               </div>
 
               {/* Row 4: Display Order and Active Status */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Display Order
@@ -454,7 +517,7 @@ function AdminProducts() {
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-neon-blue"
                   />
                 </div>
-                <div className="flex items-center pt-6">
+                <div className="flex items-center sm:pt-6">
                   <input
                     type="checkbox"
                     id="is_active"
@@ -469,19 +532,19 @@ function AdminProducts() {
               </div>
             </div>
 
-            <div className="mt-6 flex space-x-2 justify-end">
+            <div className="mt-6 flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
               <button
                 onClick={() => {
                   setShowAddModal(false);
                   setEditingProduct(null);
                 }}
-                className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+                className="w-full sm:w-auto px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
               >
                 Cancel
               </button>
               <button 
                 onClick={handleSubmit}
-                className="px-4 py-2 bg-neon-blue text-obsidian font-semibold rounded hover:bg-neon-blue/90 transition-colors"
+                className="w-full sm:w-auto px-4 py-2 bg-neon-blue text-obsidian font-semibold rounded hover:bg-neon-blue/90 transition-colors"
               >
                 {editingProduct ? 'Update Product' : 'Create Product'}
               </button>

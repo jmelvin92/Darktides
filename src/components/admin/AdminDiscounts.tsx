@@ -151,23 +151,23 @@ function AdminDiscounts() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-white">Discount Codes</h1>
-          <p className="text-gray-400 mt-1">Manage promotional and affiliate codes</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-white">Discount Codes</h1>
+          <p className="text-sm md:text-base text-gray-400 mt-1">Manage promotional and affiliate codes</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center space-x-2 px-4 py-2 bg-neon-blue text-obsidian font-semibold rounded-lg hover:bg-neon-blue/90 transition-colors"
+          className="flex items-center justify-center space-x-2 px-3 py-2 md:px-4 md:py-2 bg-neon-blue text-obsidian font-semibold rounded-lg hover:bg-neon-blue/90 transition-colors text-sm md:text-base"
         >
-          <Plus size={20} />
+          <Plus size={18} className="md:w-5 md:h-5" />
           <span>Add Code</span>
         </button>
       </div>
 
-      {/* Discount Codes Table */}
-      <div className="bg-charcoal border border-gray-800 rounded-lg overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-charcoal border border-gray-800 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-900">
@@ -262,11 +262,81 @@ function AdminDiscounts() {
         </div>
       </div>
 
+      {/* Mobile Cards View */}
+      <div className="md:hidden space-y-3">
+        {discounts.map((discount) => (
+          <div key={discount.id} className="bg-charcoal border border-gray-800 rounded-lg p-4">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-mono text-white">
+                  {discount.code}
+                </span>
+                <button
+                  onClick={() => copyCode(discount.code)}
+                  className="text-gray-400 hover:text-neon-blue transition-colors"
+                >
+                  {copiedCode === discount.code ? (
+                    <Check size={14} className="text-green-400" />
+                  ) : (
+                    <Copy size={14} />
+                  )}
+                </button>
+              </div>
+              <button
+                onClick={() => toggleActive(discount.id, discount.is_active)}
+                className={`text-xs px-2 py-1 rounded-full ${
+                  discount.is_active
+                    ? 'bg-green-500/20 text-green-400'
+                    : 'bg-red-500/20 text-red-400'
+                }`}
+              >
+                {discount.is_active ? 'Active' : 'Inactive'}
+              </button>
+            </div>
+            
+            {discount.description && (
+              <p className="text-xs text-gray-400 mb-2">{discount.description}</p>
+            )}
+            
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <p className="text-xs text-gray-400">Discount</p>
+                <p className="text-sm text-white">
+                  {discount.discount_type === 'percentage'
+                    ? `${discount.discount_value}%`
+                    : `$${discount.discount_value}`}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">Usage</p>
+                <p className="text-sm text-white">{discount.usage_count} uses</p>
+              </div>
+            </div>
+            
+            <div className="flex space-x-2">
+              <button
+                onClick={() => openEditModal(discount)}
+                className="flex-1 py-2 bg-gray-800 text-gray-300 text-sm rounded hover:bg-gray-700 transition-colors flex items-center justify-center space-x-1"
+              >
+                <Edit2 size={14} />
+                <span>Edit</span>
+              </button>
+              <button
+                onClick={() => deleteDiscount(discount.id)}
+                className="px-3 py-2 bg-gray-800 text-red-400 text-sm rounded hover:bg-gray-700 transition-colors"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Add/Edit Modal */}
       {(showAddModal || editingDiscount) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-charcoal border border-gray-800 rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-xl font-semibold text-white mb-4">
+          <div className="bg-charcoal border border-gray-800 rounded-lg p-4 md:p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
+            <h2 className="text-lg md:text-xl font-semibold text-white mb-4">
               {editingDiscount ? 'Edit Discount Code' : 'Add Discount Code'}
             </h2>
             
@@ -297,7 +367,7 @@ function AdminDiscounts() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Discount Type
@@ -340,20 +410,20 @@ function AdminDiscounts() {
               </div>
             </div>
 
-            <div className="mt-6 flex space-x-2">
+            <div className="mt-6 flex flex-col-reverse sm:flex-row gap-2">
               <button
                 onClick={() => {
                   setShowAddModal(false);
                   setEditingDiscount(null);
                   resetForm();
                 }}
-                className="flex-1 px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+                className="w-full px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
-                className="flex-1 px-4 py-2 bg-neon-blue text-obsidian font-semibold rounded hover:bg-neon-blue/90 transition-colors"
+                className="w-full px-4 py-2 bg-neon-blue text-obsidian font-semibold rounded hover:bg-neon-blue/90 transition-colors"
               >
                 {editingDiscount ? 'Update' : 'Create'}
               </button>

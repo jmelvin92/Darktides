@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
 import { Package, ShoppingCart, DollarSign, TrendingUp } from 'lucide-react';
-import type { Product, Order } from '../../lib/supabase/database.types';
+import type { Order } from '../../lib/supabase/database.types';
 
 interface DashboardStats {
   totalProducts: number;
@@ -64,76 +64,78 @@ function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-4xl font-bold text-white tracking-tight">Dashboard</h1>
-        <p className="text-neon-blue text-sm mt-1 uppercase tracking-widest">Research Operations Center</p>
+        <h1 className="text-2xl md:text-4xl font-bold text-white tracking-tight">Dashboard</h1>
+        <p className="text-neon-blue text-xs md:text-sm mt-1 uppercase tracking-widest">Research Operations Center</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-charcoal to-charcoal/50 border border-neon-blue/20 rounded-lg p-6 hover:border-neon-blue/40 transition-all duration-300 group">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+        <div className="bg-gradient-to-br from-charcoal to-charcoal/50 border border-neon-blue/20 rounded-lg p-4 md:p-6 hover:border-neon-blue/40 transition-all duration-300 group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wider">Active Products</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.totalProducts}</p>
+              <p className="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{stats.totalProducts}</p>
             </div>
-            <div className="p-3 bg-neon-blue/10 rounded-lg group-hover:bg-neon-blue/20 transition-colors">
-              <Package className="text-neon-blue" size={24} />
+            <div className="p-2 md:p-3 bg-neon-blue/10 rounded-lg group-hover:bg-neon-blue/20 transition-colors">
+              <Package className="text-neon-blue" size={20} />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-charcoal to-charcoal/50 border border-neon-teal/20 rounded-lg p-6 hover:border-neon-teal/40 transition-all duration-300 group">
+        <div className="bg-gradient-to-br from-charcoal to-charcoal/50 border border-neon-teal/20 rounded-lg p-4 md:p-6 hover:border-neon-teal/40 transition-all duration-300 group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wider">Total Orders</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.totalOrders}</p>
+              <p className="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{stats.totalOrders}</p>
             </div>
-            <div className="p-3 bg-neon-teal/10 rounded-lg group-hover:bg-neon-teal/20 transition-colors">
-              <ShoppingCart className="text-neon-teal" size={24} />
+            <div className="p-2 md:p-3 bg-neon-teal/10 rounded-lg group-hover:bg-neon-teal/20 transition-colors">
+              <ShoppingCart className="text-neon-teal" size={20} />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-charcoal to-charcoal/50 border border-green-400/20 rounded-lg p-6 hover:border-green-400/40 transition-all duration-300 group">
+        <div className="bg-gradient-to-br from-charcoal to-charcoal/50 border border-green-400/20 rounded-lg p-4 md:p-6 hover:border-green-400/40 transition-all duration-300 group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wider">Total Revenue</p>
-              <p className="text-3xl font-bold text-white mt-2">
+              <p className="text-xl md:text-3xl font-bold text-white mt-1 md:mt-2">
                 ${stats.totalRevenue.toFixed(2)}
               </p>
             </div>
-            <div className="p-3 bg-green-400/10 rounded-lg group-hover:bg-green-400/20 transition-colors">
-              <DollarSign className="text-green-400" size={24} />
+            <div className="p-2 md:p-3 bg-green-400/10 rounded-lg group-hover:bg-green-400/20 transition-colors">
+              <DollarSign className="text-green-400" size={20} />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-charcoal to-charcoal/50 border border-yellow-400/20 rounded-lg p-6 hover:border-yellow-400/40 transition-all duration-300 group">
+        <div className="bg-gradient-to-br from-charcoal to-charcoal/50 border border-yellow-400/20 rounded-lg p-4 md:p-6 hover:border-yellow-400/40 transition-all duration-300 group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wider">Low Stock Alert</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.lowStockProducts}</p>
+              <p className="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{stats.lowStockProducts}</p>
               {stats.lowStockProducts > 0 && (
                 <p className="text-xs text-yellow-400 mt-1 animate-pulse">Items &lt; 5 units</p>
               )}
             </div>
-            <div className="p-3 bg-yellow-400/10 rounded-lg group-hover:bg-yellow-400/20 transition-colors">
-              <TrendingUp className="text-yellow-400" size={24} />
+            <div className="p-2 md:p-3 bg-yellow-400/10 rounded-lg group-hover:bg-yellow-400/20 transition-colors">
+              <TrendingUp className="text-yellow-400" size={20} />
             </div>
           </div>
         </div>
       </div>
 
       {/* Recent Orders */}
-      <div className="bg-gradient-to-br from-charcoal to-charcoal/50 border border-neon-blue/20 rounded-lg p-6">
-        <h2 className="text-xl font-bold text-white mb-1">Recent Orders</h2>
-        <p className="text-xs text-neon-blue uppercase tracking-widest mb-4">Latest Transactions</p>
+      <div className="bg-gradient-to-br from-charcoal to-charcoal/50 border border-neon-blue/20 rounded-lg p-4 md:p-6">
+        <h2 className="text-lg md:text-xl font-bold text-white mb-1">Recent Orders</h2>
+        <p className="text-xs text-neon-blue uppercase tracking-widest mb-3 md:mb-4">Latest Transactions</p>
         {recentOrders.length === 0 ? (
           <p className="text-gray-400">No orders yet</p>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-gray-700">
@@ -173,6 +175,40 @@ function AdminDashboard() {
               </tbody>
             </table>
           </div>
+          
+          {/* Mobile List */}
+          <div className="md:hidden space-y-3">
+            {recentOrders.map((order) => (
+              <div key={order.id} className="border-b border-gray-800 pb-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm font-mono text-white">
+                      {order.order_number || order.id.slice(0, 8)}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {(order.customer_data as any)?.name || 'N/A'}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-white">
+                      ${(order.total || 0).toFixed(2)}
+                    </p>
+                    <span className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${
+                      order.status === 'confirmed' 
+                        ? 'bg-green-500/20 text-green-400'
+                        : 'bg-yellow-500/20 text-yellow-400'
+                    }`}>
+                      {order.status || 'pending'}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {new Date(order.created_at).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
+          </div>
+          </>
         )}
       </div>
     </div>
