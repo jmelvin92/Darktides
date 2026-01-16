@@ -61,12 +61,14 @@ function AdminPanel() {
               <Logo className="w-8 h-8" />
               <p className="text-xs text-neon-blue uppercase tracking-widest">Admin Portal</p>
             </div>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-gray-400 hover:text-neon-blue transition-colors"
-            >
-              <X size={20} />
-            </button>
+            {sidebarOpen && (
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden text-gray-400 hover:text-neon-blue transition-colors"
+              >
+                <X size={20} />
+              </button>
+            )}
           </div>
 
           {/* Navigation */}
@@ -122,9 +124,8 @@ function AdminPanel() {
           >
             <Menu size={24} />
           </button>
-          <div className="ml-3 flex items-center space-x-2">
+          <div className="ml-3 flex items-center">
             <Logo className="w-6 h-6" />
-            <h1 className="text-base font-bold text-white tracking-wider">DARKTIDES</h1>
           </div>
         </div>
 
