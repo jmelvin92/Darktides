@@ -168,7 +168,8 @@ class InventoryService {
     orderId: string, 
     customerData?: any, 
     cartItems?: any[], 
-    totals?: any
+    totals?: any,
+    paymentMethod: string = 'venmo'
   ): Promise<{ success: boolean; message?: string }> {
     try {
       console.log('🔥 SERVICE Received orderId:', orderId);
@@ -177,6 +178,7 @@ class InventoryService {
         customerData, 
         cartItems, 
         totals,
+        paymentMethod,
         sessionId: this.sessionId 
       });
 
@@ -185,7 +187,8 @@ class InventoryService {
         p_session_id: this.sessionId,
         p_customer_data: customerData || null,
         p_cart_items: cartItems || null,
-        p_totals: totals || null
+        p_totals: totals || null,
+        p_payment_method: paymentMethod
       });
 
       console.log('🔥 SERVICE Database call parameters:', {

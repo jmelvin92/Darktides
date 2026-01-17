@@ -45,9 +45,10 @@ export function useInventory() {
     orderId: string, 
     customerData?: any, 
     cartItems?: any[], 
-    totals?: any
+    totals?: any,
+    paymentMethod?: string
   ) => {
-    return await inventoryService.finalizeOrder(orderId, customerData, cartItems, totals);
+    return await inventoryService.finalizeOrder(orderId, customerData, cartItems, totals, paymentMethod);
   }, []);
 
   return {

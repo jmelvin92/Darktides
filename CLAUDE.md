@@ -5,7 +5,21 @@ This is a React/TypeScript website for DarkTides Research, a peptide research co
 
 ## Current Features Implemented
 
-### 1. Inventory Management System (COMPLETED)
+### 1. Enhanced Catalog Display (COMPLETED - January 2025)
+**Status**: ✅ Production-ready
+**Features**:
+- **Grid/List View Toggle** - Users can switch between views, preference saved in localStorage
+- **Product Search** - Real-time filtering by name, SKU, dosage, and description
+- **Mobile Optimization** - Grid cards with tap-to-expand on mobile devices
+- **Simplified Navigation** - Consolidated to Home and Catalog tabs only
+
+#### Key Updates:
+- Created `components/VialGraphic.tsx` - Reusable product vial visualization
+- Enhanced `components/Store.tsx` with `ProductGridCard` component
+- Search functionality filters products in real-time
+- View preference persists across sessions
+
+### 2. Inventory Management System (COMPLETED)
 **Status**: ✅ Production-ready (Simplified - Reservations Disabled)
 **Backend**: Supabase PostgreSQL with real-time subscriptions
 
@@ -40,8 +54,10 @@ src/hooks/
 └── useInventory.ts                 # React hook for inventory
 
 components/
-├── Store.tsx                       # Main store page (CRITICAL FOR CHECKOUT)
-└── Checkout.tsx                    # Checkout flow (CRITICAL FOR INVENTORY)
+├── Store.tsx                       # Main store page with grid/list view and search
+├── Checkout.tsx                    # Checkout flow (CRITICAL FOR INVENTORY)
+├── VialGraphic.tsx                 # Reusable vial component for product display
+└── Navigation.tsx                  # Simplified nav with Home/Catalog tabs
 
 src/admin/
 └── productManager.ts               # CLI admin tool
@@ -59,7 +75,7 @@ src/admin/
 - ~~`release_reservation()`~~ - ⚠️ DEPRECATED (reservations disabled)
 - ~~`cleanup_expired_reservations()`~~ - ⚠️ DEPRECATED (reservations disabled)
 
-### 2. Email Notification System (COMPLETED)
+### 3. Email Notification System (COMPLETED)
 **Status**: ✅ Production-ready
 **Backend**: Supabase Edge Functions + Resend API
 
@@ -87,7 +103,7 @@ src/lib/supabase/migrations/002_orders_and_email.sql  # Enhanced orders table
 - **Payment notes**: Customers must include their name + random emoji
 - **Processing**: Manual verification before fulfillment
 
-### 3. Key Business Logic
+### 4. Key Business Logic
 
 #### Checkout Flow (CRITICAL - DO NOT BREAK):
 1. **Add to Cart**: `handleAdd()` in Store.tsx → calls `checkAndReserve()` → checks stock availability only
@@ -191,7 +207,7 @@ INSERT INTO products (
 1. `apply_migration.sql` - Fix finalize_order function (CRITICAL - apply first)
 2. `add_tesa_product.sql` - Add TESA product
 
-### 4. Web-Based Admin Panel (COMPLETED)
+### 5. Web-Based Admin Panel (COMPLETED)
 **Status**: ✅ Production-ready
 **Access**: `/admin` route - Supabase authentication (email/password)
 **URL**: `darktideslab.com/admin`
@@ -252,7 +268,7 @@ src/contexts/
 
 ## Future Features Planned
 
-### Feature #5: [To be documented when implemented]  
+### Feature #6: [To be documented when implemented]  
 **Status**: 📋 Not yet started
 
 ## Development Guidelines

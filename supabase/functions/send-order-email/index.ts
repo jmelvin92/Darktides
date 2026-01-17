@@ -23,6 +23,8 @@ interface OrderData {
   total: number;
   discount_code?: string;
   discount_amount?: number;
+  payment_method?: string;
+  coinbase_charge_code?: string;
   items: Array<{
     id: string;
     name: string;
@@ -31,6 +33,12 @@ interface OrderData {
     quantity: number;
   }>;
   created_at: string;
+  payment_confirmation?: {
+    method: string;
+    network?: string;
+    transaction_id?: string;
+    confirmed_at?: string;
+  };
 }
 
 function generateBusinessEmailHTML(order: OrderData): string {
@@ -96,6 +104,21 @@ function generateBusinessEmailHTML(order: OrderData): string {
         <span style="font-weight: 600; color: #374151;">Order Total:</span>
         <span style="font-weight: 700; color: #059669; font-size: 18px;">$${order.total.toFixed(2)}</span>
       </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span style="font-weight: 600; color: #374151;">Payment Method:</span>
+        <span style="background: ${order.payment_method === 'crypto' || order.payment_confirmation?.method === 'crypto' ? '#10b981' : '#38bdf8'}; color: white; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 14px; font-weight: bold; text-transform: uppercase;">
+          ${order.payment_method === 'crypto' || order.payment_confirmation?.method === 'crypto' ? '₿ CRYPTO' : 'VENMO'}
+        </span>
+      </div>
+      ${order.payment_confirmation?.method === 'crypto' ? `
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span style="font-weight: 600; color: #374151;">Crypto Network:</span>
+        <span style="color: #6b7280; font-family: monospace; font-size: 12px;">${order.payment_confirmation.network || 'Unknown'}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span style="font-weight: 600; color: #374151;">Transaction ID:</span>
+        <span style="color: #6b7280; font-family: monospace; font-size: 10px; word-break: break-all;">${order.payment_confirmation.transaction_id || 'N/A'}</span>
+      </div>` : ''}
       <div style="display: flex; justify-content: space-between;">
         <span style="font-weight: 600; color: #374151;">Affiliate/Discount:</span>
         <span style="background: #fbbf24; color: #451a03; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 14px; font-weight: bold;">
@@ -189,7 +212,11 @@ function generateBusinessEmailHTML(order: OrderData): string {
     <!-- Next Steps -->
     <div style="background: #dcfce7; border: 1px solid #22c55e; padding: 20px; border-radius: 8px; text-align: center;">
       <h3 style="margin: 0 0 10px; color: #166534;">✅ Ready for Fulfillment</h3>
-      <p style="margin: 0; color: #166534;">This order is ready to be packed and shipped. Customer payment confirmation pending via Venmo.</p>
+      <p style="margin: 0; color: #166534;">
+        ${order.payment_method === 'crypto' || order.payment_confirmation?.method === 'crypto' 
+          ? 'Crypto payment confirmed! This order is ready to be packed and shipped.'
+          : 'This order is ready to be packed and shipped. Customer payment confirmation pending via Venmo.'}
+      </p>
     </div>
 
   </div>
