@@ -29,15 +29,16 @@ const Navigation: React.FC<NavProps> = ({ currentView, onNavigate, cartCount }) 
       onNavigate('store');
     } else if (sectionId === 'checkout') {
       onNavigate('checkout');
+    } else if (sectionId === 'home' || sectionId === '') {
+      onNavigate('home');
     } else {
       onNavigate('home', sectionId);
     }
   };
 
   const navLinks = [
+    { label: 'Home', id: 'home' },
     { label: 'Catalog', id: 'store' },
-    { label: 'Operations', id: 'about' },
-    { label: 'Classifications', id: 'research' },
   ];
 
   return (
@@ -61,12 +62,12 @@ const Navigation: React.FC<NavProps> = ({ currentView, onNavigate, cartCount }) 
               href={`#${link.id}`}
               onClick={(e) => handleLinkClick(e, link.id)}
               className={`text-[10px] font-mono uppercase tracking-[0.2em] hover:text-white transition-colors duration-300 relative group ${
-                currentView === link.id ? 'text-neon-blue' : 'text-gray-400'
+                (link.id === 'home' && currentView === 'home') || (link.id === 'store' && currentView === 'store') ? 'text-neon-blue' : 'text-gray-400'
               }`}
             >
               {link.label}
               <span className={`absolute -bottom-2 left-0 h-[1px] bg-neon-blue transition-all duration-300 ${
-                 currentView === link.id ? 'w-full' : 'w-0 group-hover:w-full'
+                 (link.id === 'home' && currentView === 'home') || (link.id === 'store' && currentView === 'store') ? 'w-full' : 'w-0 group-hover:w-full'
               }`}></span>
             </a>
           ))}

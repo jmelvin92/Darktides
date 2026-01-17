@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, AlertTriangle, Check, ArrowLeft, ShieldAlert, ArrowRight, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, AlertTriangle, Check, ArrowLeft, ShieldAlert, ArrowRight, ShoppingBag, LayoutList, LayoutGrid, Search, X } from 'lucide-react';
 import FadeIn from './FadeIn';
 import Logo from './Logo';
+import VialGraphic from './VialGraphic';
 import { useProducts } from '../src/hooks/useProducts';
 import { useInventory } from '../src/hooks/useInventory';
 
@@ -25,6 +26,146 @@ interface Product {
   stockQuantity: number;
 }
 
+// Grid Card Component for Grid View
+const ProductGridCard: React.FC<{ product: Product, onAddToCart: (product: Product, quantity: number) => void }> = ({ product, onAddToCart }) => {
+  const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const { checkAndReserve } = useInventory();
+  
+  const isOutOfStock = product.stockQuantity === 0;
+
+  const handleAdd = async () => {
+    if (isOutOfStock) return;
+    
+    const result = await checkAndReserve(product.id, quantity);
+    
+    if (result.success) {
+      onAddToCart(product, quantity);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    } else {
+      setUnavailable(true);
+      setTimeout(() => setUnavailable(false), 3000);
+    }
+  };
+
+  return (
+    <div className="group/card relative transition-all duration-500 ease-out">
+      <div className="border border-white/5 bg-obsidian/40 backdrop-blur-sm rounded-xl shadow-xl transition-all duration-500 hover:border-neon-blue/20 overflow-hidden">
+        
+        {/* Card Header - Always Visible */}
+        <div 
+          className="p-6 cursor-pointer md:cursor-default"
+          onClick={() => setExpanded(!expanded)}
+        >
+          {/* Product Vial - Compact Version */}
+          <div className="relative flex items-center justify-center mb-4 h-32">
+            {isOutOfStock && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center">
+                <div className="bg-red-900/95 backdrop-blur-sm px-4 py-2 rounded-lg border border-red-700/50 shadow-2xl transform rotate-[-5deg]">
+                  <p className="text-white font-bold uppercase tracking-wider text-sm">Out of Stock</p>
+                </div>
+              </div>
+            )}
+            
+            <VialGraphic 
+              productName={product.shortName}
+              dosage={product.dosage}
+              scale="medium"
+              isOutOfStock={isOutOfStock}
+            />
+          </div>
+
+          {/* Basic Info */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-bold text-white uppercase tracking-tight">{product.name}</h3>
+            <div className="flex items-center gap-3">
+              <span className="text-xl text-neon-blue font-mono">${product.price.toFixed(2)}</span>
+              <span className="text-gray-500 text-xs line-through">${product.oldPrice.toFixed(2)}</span>
+            </div>
+            <p className="text-[10px] text-gray-600 font-mono">SKU: {product.sku}</p>
+          </div>
+
+          {/* Mobile expand indicator */}
+          <div className="md:hidden flex items-center justify-center mt-4">
+            <span className="text-gray-500 text-[10px] font-mono uppercase tracking-wider">
+              {expanded ? 'Tap to collapse' : 'Tap for details'}
+            </span>
+          </div>
+        </div>
+
+        {/* Expandable Content - Mobile: Collapsible, Desktop: Always visible */}
+        <div className={`${
+          expanded ? 'max-h-[500px]' : 'max-h-0 md:max-h-[500px]'
+        } overflow-hidden transition-all duration-300`}>
+          <div className="px-6 pb-6 space-y-4">
+            {/* Description */}
+            <p className="text-xs text-gray-400 leading-relaxed line-clamp-3">
+              {product.description}
+            </p>
+
+            {/* Quantity and Add to Cart */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className={`flex items-center border border-white/10 bg-white/5 rounded ${isOutOfStock ? 'opacity-50' : ''}`}>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setQuantity(Math.max(1, quantity - 1)); }}
+                  className="px-3 py-2 text-white hover:bg-white/10 transition-colors disabled:cursor-not-allowed"
+                  disabled={isOutOfStock}
+                >-</button>
+                <span className="px-3 py-2 text-white font-mono text-xs w-10 text-center">{quantity}</span>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setQuantity(quantity + 1); }}
+                  className="px-3 py-2 text-white hover:bg-white/10 transition-colors disabled:cursor-not-allowed"
+                  disabled={isOutOfStock}
+                >+</button>
+              </div>
+              
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleAdd(); }}
+                className={`flex-1 font-bold uppercase tracking-wider py-2 px-4 rounded transition-all flex items-center justify-center gap-2 text-xs ${
+                  isOutOfStock
+                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                  : unavailable
+                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                  : added 
+                  ? 'bg-neon-teal text-obsidian' 
+                  : 'bg-neon-blue hover:bg-neon-blue/90 text-obsidian'
+                }`}
+                disabled={isOutOfStock || unavailable}
+              >
+                {isOutOfStock ? (
+                  <>
+                    <AlertTriangle className="w-3 h-3" />
+                    Out of Stock
+                  </>
+                ) : unavailable ? (
+                  <>
+                    <AlertTriangle className="w-3 h-3" />
+                    Unavailable
+                  </>
+                ) : added ? (
+                  <>
+                    <Check className="w-3 h-3" />
+                    Added
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-3 h-3" />
+                    Add to Cart
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// List Card Component (Original ProductCard)
 const ProductCard: React.FC<{ product: Product, onAddToCart: (product: Product, quantity: number) => void }> = ({ product, onAddToCart }) => {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -65,33 +206,13 @@ const ProductCard: React.FC<{ product: Product, onAddToCart: (product: Product, 
             </div>
           )}
           
-          <div className={`relative z-10 flex flex-col items-center transform scale-125 md:scale-150 transition-transform duration-700 group-hover/card:scale-[1.3] md:group-hover/card:scale-[1.55] ${isOutOfStock ? 'opacity-40' : ''}`}>
-              <div className="w-24 h-5 bg-neutral-900 rounded-t-sm shadow-lg z-30 border-t border-white/20 relative">
-                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent rounded-t-sm"></div>
-              </div>
-              <div className="w-22 h-6 -mt-1 bg-gradient-to-r from-gray-500 via-gray-200 to-gray-500 z-20 shadow-md border-b border-gray-600 rounded-sm"></div>
-              <div className="w-20 h-6 bg-white/10 backdrop-blur-sm border-x border-white/30 z-10" />
-              <div className="w-32 h-56 bg-gradient-to-r from-white/20 via-white/5 to-white/20 backdrop-blur-md border border-white/30 rounded-b-xl relative overflow-hidden shadow-2xl flex flex-col items-center">
-                  <div className="absolute bottom-1 left-1 right-1 h-52 bg-gradient-to-t from-white/10 to-transparent rounded-b-lg opacity-40" />
-                  <div className="absolute top-5 w-full h-40 bg-black shadow-xl flex flex-col relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent z-40 pointer-events-none mix-blend-overlay"></div>
-                      <div className="h-10 bg-gradient-to-r from-gray-400 via-gray-100 to-gray-400 flex items-center justify-center gap-2 border-b border-gray-500 relative overflow-hidden">
-                          <div className="w-5 h-5 text-black"><Logo className="w-full h-full" showText={false} /></div>
-                          <span className="font-sans font-bold text-black tracking-widest text-[10px]">DARKTIDES</span>
-                      </div>
-                      <div className="flex-1 bg-neutral-950 p-3 flex flex-col items-center text-center relative">
-                          <h3 className="text-xl font-bold text-white font-sans tracking-tight mb-1">{product.shortName}</h3>
-                          <div className="border border-white/80 px-1.5 py-0.5 mb-2">
-                              <span className="text-white font-mono text-xs font-bold">{product.dosage}</span>
-                          </div>
-                          <div className="space-y-0.5 mt-auto mb-1">
-                              <p className="text-[7px] font-mono text-gray-300 tracking-wider">≥99% HPLC PURITY</p>
-                              <p className="text-[5px] font-mono text-gray-500 uppercase">FOR RESEARCH PURPOSES ONLY</p>
-                          </div>
-                      </div>
-                  </div>
-                  <div className="absolute top-0 left-2 w-1.5 h-full bg-gradient-to-b from-white/40 to-transparent opacity-60 pointer-events-none mix-blend-overlay blur-[1px]"></div>
-              </div>
+          <div className="group/card">
+            <VialGraphic 
+              productName={product.shortName}
+              dosage={product.dosage}
+              scale="large"
+              isOutOfStock={isOutOfStock}
+            />
           </div>
         </div>
 
@@ -195,7 +316,26 @@ const ProductCard: React.FC<{ product: Product, onAddToCart: (product: Product, 
 
 const Store: React.FC<StoreProps> = ({ onBack, onAddToCart, onGoToCheckout, cartCount }) => {
   const [showFloatingCart, setShowFloatingCart] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>(() => {
+    // Load saved preference from localStorage
+    const saved = localStorage.getItem('catalogViewMode');
+    return (saved === 'grid' || saved === 'list') ? saved : 'list';
+  });
+  const [searchTerm, setSearchTerm] = useState('');
   const { products, loading } = useProducts();
+
+  // Filter products based on search term
+  const filteredProducts = products.filter(product => {
+    if (!searchTerm.trim()) return true;
+    const search = searchTerm.toLowerCase();
+    return (
+      product.name.toLowerCase().includes(search) ||
+      product.shortName.toLowerCase().includes(search) ||
+      product.sku.toLowerCase().includes(search) ||
+      product.dosage.toLowerCase().includes(search) ||
+      product.description.toLowerCase().includes(search)
+    );
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -206,12 +346,17 @@ const Store: React.FC<StoreProps> = ({ onBack, onAddToCart, onGoToCheckout, cart
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Save view mode preference
+  useEffect(() => {
+    localStorage.setItem('catalogViewMode', viewMode);
+  }, [viewMode]);
+
 
   return (
     <section className="pt-32 pb-24 px-6 relative min-h-screen">
       <div className="max-w-7xl mx-auto">
         
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
           <button 
             onClick={onBack}
             className="group flex items-center gap-2 text-gray-400 hover:text-neon-blue transition-colors font-mono text-xs tracking-widest uppercase"
@@ -229,22 +374,89 @@ const Store: React.FC<StoreProps> = ({ onBack, onAddToCart, onGoToCheckout, cart
           </button>
         </div>
 
-        <FadeIn>
-          <div className="flex flex-col gap-12">
-            {loading ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 font-mono text-xs uppercase tracking-widest">Loading Products...</p>
-              </div>
-            ) : products.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 font-mono text-xs uppercase tracking-widest">No products available at this time</p>
-              </div>
-            ) : (
-              products.map((product) => (
-                <ProductCard key={product.id} product={product as Product} onAddToCart={onAddToCart} />
-              ))
-            )}
+        {/* Search and View Controls */}
+        <div className="flex flex-col md:flex-row gap-4 mb-12">
+          {/* Search Bar */}
+          <div className="flex-1 max-w-md">
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-neon-blue transition-colors" />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-10 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-neon-blue/50 focus:bg-white/10 transition-all font-mono text-xs tracking-wider"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* View Toggle */}
+          <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded transition-all ${
+                viewMode === 'list'
+                  ? 'bg-neon-blue text-obsidian'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+              title="List View"
+            >
+              <LayoutList className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded transition-all ${
+                viewMode === 'grid'
+                  ? 'bg-neon-blue text-obsidian'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+              title="Grid View"
+            >
+              <LayoutGrid className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <FadeIn>
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 font-mono text-xs uppercase tracking-widest">Loading Products...</p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 font-mono text-xs uppercase tracking-widest">
+                {searchTerm ? `No products found for "${searchTerm}"` : 'No products available at this time'}
+              </p>
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="mt-4 text-neon-blue hover:text-neon-blue/80 font-mono text-xs uppercase tracking-wider transition-colors"
+                >
+                  Clear Search
+                </button>
+              )}
+            </div>
+          ) : viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredProducts.map((product) => (
+                <ProductGridCard key={product.id} product={product as Product} onAddToCart={onAddToCart} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-12">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product.id} product={product as Product} onAddToCart={onAddToCart} />
+              ))}
+            </div>
+          )}
         </FadeIn>
 
         <FadeIn delay={200}>
