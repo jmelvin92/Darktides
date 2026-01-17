@@ -89,8 +89,8 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({ selected,
           </div>
           
           <div className="flex-grow">
-            <p className="text-white font-medium text-base">Coinbase v3</p>
-            <p className="text-gray-500 text-xs mt-0.5">Bitcoin, Ethereum, USDC - DEBUG</p>
+            <p className="text-white font-medium text-base">Coinbase</p>
+            <p className="text-gray-500 text-xs mt-0.5">Bitcoin, Ethereum, USDC</p>
           </div>
 
           {selected === 'crypto' && (

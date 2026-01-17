@@ -10,8 +10,6 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-console.log('DEBUG: Supabase URL:', supabaseUrl);
-console.log('DEBUG: Has Anon Key:', !!supabaseAnonKey);
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface CheckoutProps {
@@ -136,7 +134,6 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
   };
 
   const handleCryptoPayment = async () => {
-    alert('DEBUG: handleCryptoPayment called!');
     console.log('=== STARTING CRYPTO PAYMENT PROCESS ===');
     console.log('Cart:', cart);
     console.log('Shipping data:', shippingData);
@@ -238,17 +235,19 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
         return;
       }
       
-      // Wait a moment for the database to commit
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wait longer for the database to commit the transaction
+      console.log('Waiting for database to commit...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Manually trigger email for crypto orders (since trigger might not be working)
       try {
         console.log('Fetching order for email:', finalOrderId);
+        // Use untyped query to avoid type issues
         const { data: orderData, error: fetchError } = await supabase
           .from('orders')
           .select('*')
           .eq('order_number', finalOrderId)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single to handle no results
         
         if (fetchError) {
           console.error('Error fetching order for email:', fetchError);
