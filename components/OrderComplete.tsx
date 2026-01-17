@@ -19,22 +19,23 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
     }
   }, [orderNumber]);
 
-  const sendOrderEmail = async (orderData: any) => {
+  const confirmCryptoOrder = async (orderNumber: string) => {
     try {
-      console.log('Sending order confirmation email for crypto payment...');
+      console.log('Confirming crypto order and triggering email...');
       setEmailSent(true); // Mark as sent immediately to prevent duplicates
       
-      const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-order-email', {
-        body: { record: orderData }
-      });
+      // Call the new function to mark order as confirmed
+      // This will trigger the database email trigger
+      const { data, error } = await supabase
+        .rpc('confirm_crypto_order', { p_order_number: orderNumber });
       
-      if (emailError) {
-        console.error('Email send error:', emailError);
+      if (error) {
+        console.error('Error confirming crypto order:', error);
       } else {
-        console.log('Email sent successfully:', emailResult);
+        console.log('Crypto order confirmed, email will be sent by trigger');
       }
     } catch (error) {
-      console.error('Failed to send email:', error);
+      console.error('Failed to confirm crypto order:', error);
     }
   };
 
@@ -60,9 +61,10 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
           console.log('Payment status:', data?.payment_status);
           setOrderDetails(data);
           
-          // Send email for crypto orders when we arrive from Coinbase
-          if (data.payment_method === 'crypto' && !emailSent) {
-            sendOrderEmail(data);
+          // Confirm crypto orders when we arrive from Coinbase
+          // This will mark as confirmed and trigger the email
+          if (data.payment_method === 'crypto' && !emailSent && data.status !== 'confirmed') {
+            confirmCryptoOrder(orderNumber);
           }
           
           setLoading(false);
