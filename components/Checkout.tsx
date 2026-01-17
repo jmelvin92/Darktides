@@ -6,7 +6,11 @@ import PaymentMethodSelector from './PaymentMethodSelector';
 import { CartItem } from '../src/components/MainSite';
 import { useInventory } from '../src/hooks/useInventory';
 import { inventoryService } from '../src/lib/inventory/InventoryService';
-import { supabase } from '../src/lib/supabase/client';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface CheckoutProps {
   cart: CartItem[];
@@ -181,10 +185,25 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
       } else {
         // If 5-param succeeded, update the payment method
         console.log('Updating payment method to crypto');
-        await supabase
+        
+        type OrderUpdate = {
+          payment_method?: string;
+          payment_status?: string;
+        };
+        
+        const updatePayload: OrderUpdate = { 
+          payment_method: 'crypto', 
+          payment_status: 'pending_crypto' 
+        };
+        
+        const { error: updateError } = await supabase
           .from('orders')
-          .update({ payment_method: 'crypto', payment_status: 'pending_crypto' })
+          .update(updatePayload as any) // TypeScript issue with generated types
           .eq('order_number', finalOrderId);
+          
+        if (updateError) {
+          console.error('Failed to update payment method:', updateError);
+        }
       }
       
       if (!result.success) {

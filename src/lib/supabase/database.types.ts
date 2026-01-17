@@ -96,16 +96,54 @@ export interface Database {
           total: number
           customer_data: Json
           status: string
+          payment_status?: string
+          payment_method?: string
+          customer_first_name?: string
+          customer_last_name?: string
+          customer_email?: string
+          customer_phone?: string
+          shipping_address?: string
+          shipping_city?: string
+          shipping_state?: string
+          shipping_zip?: string
+          order_notes?: string
+          subtotal?: number
+          shipping_cost?: number
+          discount_code?: string
+          discount_amount?: number
+          session_id?: string
+          coinbase_charge_code?: string
+          crypto_payment_details?: Json
           created_at: string
+          updated_at?: string
         }
         Insert: {
           id?: string
           order_number: string
           items: Json
           total: number
-          customer_data: Json
+          customer_data?: Json
           status?: string
+          payment_status?: string
+          payment_method?: string
+          customer_first_name?: string
+          customer_last_name?: string
+          customer_email?: string
+          customer_phone?: string
+          shipping_address?: string
+          shipping_city?: string
+          shipping_state?: string
+          shipping_zip?: string
+          order_notes?: string
+          subtotal?: number
+          shipping_cost?: number
+          discount_code?: string
+          discount_amount?: number
+          session_id?: string
+          coinbase_charge_code?: string
+          crypto_payment_details?: Json
           created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
@@ -114,7 +152,26 @@ export interface Database {
           total?: number
           customer_data?: Json
           status?: string
+          payment_status?: string
+          payment_method?: string
+          customer_first_name?: string
+          customer_last_name?: string
+          customer_email?: string
+          customer_phone?: string
+          shipping_address?: string
+          shipping_city?: string
+          shipping_state?: string
+          shipping_zip?: string
+          order_notes?: string
+          subtotal?: number
+          shipping_cost?: number
+          discount_code?: string
+          discount_amount?: number
+          session_id?: string
+          coinbase_charge_code?: string
+          crypto_payment_details?: Json
           created_at?: string
+          updated_at?: string
         }
       }
       inventory_transactions: {
