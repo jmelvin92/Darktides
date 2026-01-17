@@ -12,6 +12,7 @@ interface CheckoutProps {
   cart: CartItem[];
   onBack: () => void;
   onClearCart: () => void;
+  onOrderComplete?: (orderId: string) => void;
 }
 
 interface ShippingData {
@@ -26,7 +27,7 @@ interface ShippingData {
   orderNotes: string;
 }
 
-const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
+const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderComplete }) => {
   const [step, setStep] = useState<'shipping' | 'payment-method' | 'payment' | 'complete'>('shipping');
   const [paymentMethod, setPaymentMethod] = useState<'venmo' | 'crypto'>('venmo');
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -242,14 +243,22 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart }) => {
       setOrderId(finalOrderId);
       console.log('🔥 FRONTEND Set state order ID:', finalOrderId);
       onClearCart();
-      setStep('complete');
+      if (onOrderComplete) {
+        onOrderComplete(finalOrderId);
+      } else {
+        setStep('complete');
+      }
     } else {
       setValidationError('Unable to complete order. Please try again.');
     }
   };
 
   const handleReturnToHome = () => {
-    onBack();
+    if (onOrderComplete && orderId) {
+      onOrderComplete(orderId);
+    } else {
+      onBack();
+    }
   };
 
   const RequiredLabel: React.FC<{ children: React.ReactNode; required?: boolean }> = ({ children, required = true }) => (

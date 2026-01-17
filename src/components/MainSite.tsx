@@ -10,9 +10,10 @@ import Philosophy from '../../components/Philosophy';
 import Footer from '../../components/Footer';
 import AgeVerification from '../../components/AgeVerification';
 import Checkout from '../../components/Checkout';
+import OrderComplete from '../../components/OrderComplete';
 import { BrandTheme } from '../../theme';
 
-export type ViewState = 'home' | 'store' | 'checkout';
+export type ViewState = 'home' | 'store' | 'checkout' | 'order-complete';
 
 export interface CartItem {
   id: string;
@@ -26,6 +27,19 @@ function MainSite() {
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [scrollProgress, setScrollProgress] = useState(0);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check for order-complete URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const order = urlParams.get('order');
+    if (order) {
+      setOrderNumber(order);
+      setCurrentView('order-complete');
+      // Clear URL parameters
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -95,13 +109,22 @@ function MainSite() {
             onGoToCheckout={() => handleNavigate('checkout')}
             cartCount={cartCount}
           />
-        ) : (
+        ) : currentView === 'checkout' ? (
           <Checkout 
             cart={cart} 
             onBack={() => handleNavigate('store')}
             onClearCart={() => setCart([])}
+            onOrderComplete={(orderId) => {
+              setOrderNumber(orderId);
+              setCurrentView('order-complete');
+            }}
           />
-        )}
+        ) : currentView === 'order-complete' ? (
+          <OrderComplete 
+            orderNumber={orderNumber}
+            onReturnHome={() => handleNavigate('home')}
+          />
+        ) : null}
       </main>
 
       <Footer />

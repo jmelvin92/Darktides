@@ -1,0 +1,178 @@
+import React, { useEffect, useState } from 'react';
+import { CheckCircle2, Home, Package } from 'lucide-react';
+import FadeIn from './FadeIn';
+import { supabase } from '../src/lib/supabase/client';
+
+interface OrderCompleteProps {
+  orderNumber: string | null;
+  onReturnHome: () => void;
+}
+
+const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome }) => {
+  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (orderNumber) {
+      fetchOrderDetails();
+    }
+  }, [orderNumber]);
+
+  const fetchOrderDetails = async () => {
+    if (!orderNumber) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('order_number', orderNumber)
+        .single();
+
+      if (!error && data) {
+        setOrderDetails(data);
+      }
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <section className="pt-32 pb-24 px-6 min-h-screen flex items-center justify-center">
+        <FadeIn>
+          <div className="text-center space-y-4">
+            <div className="w-12 h-12 border-2 border-neon-blue border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-gray-400 font-mono text-xs">Loading order details...</p>
+          </div>
+        </FadeIn>
+      </section>
+    );
+  }
+
+  const paymentMethod = orderDetails?.payment_method || 'venmo';
+  const isVenmo = paymentMethod === 'venmo';
+  const isCrypto = paymentMethod === 'crypto';
+
+  return (
+    <section className="pt-32 pb-24 px-6 min-h-screen">
+      <FadeIn>
+        <div className="max-w-3xl mx-auto">
+          <div className="glass-panel p-8 md:p-12 space-y-8 border-t-2 border-t-neon-teal">
+            {/* Success Icon */}
+            <div className="flex justify-center">
+              <div className="w-24 h-24 bg-neon-teal/10 rounded-full flex items-center justify-center border-2 border-neon-teal/30">
+                <CheckCircle2 className="w-12 h-12 text-neon-teal" />
+              </div>
+            </div>
+
+            {/* Main Message */}
+            <div className="text-center space-y-4">
+              <h1 className="text-4xl font-bold text-white uppercase tracking-tighter">
+                Order Received!
+              </h1>
+              <p className="text-gray-400 text-lg leading-relaxed max-w-md mx-auto">
+                {isCrypto ? (
+                  <>Your cryptocurrency payment has been received and your order is being processed.</>
+                ) : (
+                  <>Thank you for your order. We've received your information and will process it once we confirm your Venmo payment.</>
+                )}
+              </p>
+            </div>
+
+            {/* Order Details Box */}
+            <div className="bg-white/5 border border-white/10 rounded-lg p-6 space-y-4">
+              <div className="flex items-center gap-3 pb-4 border-b border-white/10">
+                <Package className="w-5 h-5 text-neon-blue" />
+                <h3 className="text-lg font-bold text-white uppercase tracking-wide">Order Details</h3>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Order Number</p>
+                  <p className="font-mono text-white">{orderNumber || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Payment Method</p>
+                  <p className="font-mono text-white capitalize">{paymentMethod === 'crypto' ? 'Coinbase' : paymentMethod}</p>
+                </div>
+                {orderDetails && (
+                  <>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Customer</p>
+                      <p className="font-mono text-white">
+                        {orderDetails.customer_first_name} {orderDetails.customer_last_name}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Email</p>
+                      <p className="font-mono text-white text-sm">{orderDetails.customer_email}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Payment Instructions for Venmo */}
+              {isVenmo && (
+                <div className="mt-6 p-4 bg-yellow-900/20 border border-yellow-900/30 rounded">
+                  <p className="text-yellow-400 text-sm font-semibold mb-2">⚠️ Payment Required</p>
+                  <p className="text-gray-300 text-xs leading-relaxed">
+                    Please complete your payment via Venmo to <span className="font-mono text-white">@Darktides</span> with your name and a random emoji in the notes. Your order will be processed once payment is confirmed.
+                  </p>
+                </div>
+              )}
+
+              {/* Confirmation for Crypto */}
+              {isCrypto && (
+                <div className="mt-6 p-4 bg-green-900/20 border border-green-900/30 rounded">
+                  <p className="text-green-400 text-sm font-semibold mb-2">✓ Payment Confirmed</p>
+                  <p className="text-gray-300 text-xs leading-relaxed">
+                    Your cryptocurrency payment has been successfully confirmed on the blockchain. You will receive an email confirmation shortly with your order details and tracking information once shipped.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* What's Next Section */}
+            <div className="bg-white/5 border border-white/10 rounded-lg p-6 space-y-3">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-3">What Happens Next?</h3>
+              <ol className="space-y-2 text-xs text-gray-400 leading-relaxed">
+                <li className="flex gap-2">
+                  <span className="text-neon-blue font-mono">1.</span>
+                  <span>{isCrypto ? 'Your order is being prepared for shipment' : 'Complete your Venmo payment if not already done'}</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-neon-blue font-mono">2.</span>
+                  <span>You'll receive an email confirmation with full order details</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-neon-blue font-mono">3.</span>
+                  <span>Your order will be shipped within 1-2 business days</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-neon-blue font-mono">4.</span>
+                  <span>Tracking information will be sent to your email</span>
+                </li>
+              </ol>
+            </div>
+
+            {/* Action Button */}
+            <div className="flex justify-center pt-4">
+              <button
+                onClick={onReturnHome}
+                className="flex items-center gap-3 px-8 py-4 bg-neon-blue text-obsidian font-bold uppercase tracking-[0.2em] text-xs hover:bg-neon-blue/90 transition-all"
+              >
+                <Home className="w-4 h-4" />
+                Return to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      </FadeIn>
+    </section>
+  );
+};
+
+export default OrderComplete;
