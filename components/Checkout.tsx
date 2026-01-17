@@ -237,7 +237,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
       
       // Wait longer for the database to commit the transaction
       console.log('Waiting for database to commit...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 3000)); // Increased to 3 seconds
       
       // Manually trigger email for crypto orders (since trigger might not be working)
       try {

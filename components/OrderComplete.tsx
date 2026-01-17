@@ -32,26 +32,30 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
           .from('orders')
           .select('*')
           .eq('order_number', orderNumber)
-          .single() as any;
+          .maybeSingle() as any;
 
-        if (!error && data) {
+        if (data) {
           console.log('Order details fetched:', data);
           console.log('Payment method:', data?.payment_method);
           console.log('Payment status:', data?.payment_status);
           setOrderDetails(data);
           setLoading(false);
           return; // Success - exit function
-        } else if (error && error.code === 'PGRST116') {
-          // Row not found - retry with exponential backoff
+        } else if (!data && !error) {
+          // No data found - retry with exponential backoff
           retries++;
           if (retries < maxRetries) {
             console.log(`Order not found yet, retrying in ${retryDelay * retries}ms (attempt ${retries}/${maxRetries})`);
             await new Promise(resolve => setTimeout(resolve, retryDelay * retries));
           }
         } else if (error) {
-          // Other error - log but don't retry
-          console.error('Error fetching order:', error);
-          break;
+          // Log error but continue retrying if it's a "not found" error
+          console.log('Error fetching order:', error);
+          retries++;
+          if (retries < maxRetries) {
+            console.log(`Retrying in ${retryDelay * retries}ms (attempt ${retries}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay * retries));
+          }
         }
       } catch (error) {
         console.error('Error fetching order details:', error);
