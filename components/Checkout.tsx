@@ -10,6 +10,8 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+console.log('DEBUG: Supabase URL:', supabaseUrl);
+console.log('DEBUG: Has Anon Key:', !!supabaseAnonKey);
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface CheckoutProps {
@@ -134,6 +136,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
   };
 
   const handleCryptoPayment = async () => {
+    alert('DEBUG: handleCryptoPayment called!');
     console.log('=== STARTING CRYPTO PAYMENT PROCESS ===');
     console.log('Cart:', cart);
     console.log('Shipping data:', shippingData);
