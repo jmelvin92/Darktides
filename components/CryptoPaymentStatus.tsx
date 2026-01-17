@@ -55,7 +55,7 @@ const CryptoPaymentStatus: React.FC<CryptoPaymentStatusProps> = ({ orderNumber, 
         .from('orders')
         .select('payment_status')
         .eq('order_number', orderNumber)
-        .single();
+        .single() as any;
 
       if (!error && data) {
         if (data.payment_status === 'confirmed') {
