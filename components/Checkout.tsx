@@ -194,39 +194,12 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
       }
       console.log('Database connection OK');
       
-      // First try the 5-parameter version (without payment_method)
-      console.log('Calling finalizeOrder with 5 parameters...');
-      let result = await finalizeOrder(finalOrderId, customerData, cartItems, totals);
-      console.log('Finalize order result (5 params):', result);
+      // ALWAYS use 6-parameter version for crypto to set correct status
+      console.log('Calling finalizeOrder with crypto payment method...');
+      const result = await finalizeOrder(finalOrderId, customerData, cartItems, totals, 'crypto');
+      console.log('Finalize order result:', result);
       
-      if (!result.success) {
-        // If 5-param fails, try 6-param version
-        console.log('Trying 6-parameter version with crypto payment method');
-        result = await finalizeOrder(finalOrderId, customerData, cartItems, totals, 'crypto');
-        console.log('Finalize order result (6 params):', result);
-      } else {
-        // If 5-param succeeded, update the payment method
-        console.log('Updating payment method to crypto');
-        
-        type OrderUpdate = {
-          payment_method?: string;
-          payment_status?: string;
-        };
-        
-        const updatePayload: OrderUpdate = { 
-          payment_method: 'crypto', 
-          payment_status: 'pending_crypto' 
-        };
-        
-        const { error: updateError } = await supabase
-          .from('orders')
-          .update(updatePayload as any) // TypeScript issue with generated types
-          .eq('order_number', finalOrderId);
-          
-        if (updateError) {
-          console.error('Failed to update payment method:', updateError);
-        }
-      }
+      // Remove the else block that was updating payment method - not needed anymore
       
       if (!result.success) {
         console.error('Order creation failed:', result);

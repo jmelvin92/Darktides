@@ -26,7 +26,7 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
       
       // Call the new function to mark order as confirmed
       // This will trigger the database email trigger
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .rpc('confirm_crypto_order', { p_order_number: orderNumber });
       
       if (error) {
