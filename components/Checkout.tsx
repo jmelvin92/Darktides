@@ -131,11 +131,16 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
   };
 
   const handleCryptoPayment = async () => {
+    console.log('=== STARTING CRYPTO PAYMENT PROCESS ===');
+    console.log('Cart:', cart);
+    console.log('Shipping data:', shippingData);
+    
     setProcessingCrypto(true);
     setValidationError(null);
     
     // Generate order ID
     const finalOrderId = `DT-${Math.random().toString(36).substring(7).toUpperCase()}`;
+    console.log('Generated order ID:', finalOrderId);
     
     try {
       // First, finalize the order in our database
@@ -173,7 +178,21 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
       console.log('Cart items:', cartItems);
       console.log('Totals:', totals);
       
+      // First check if we can even connect to the database
+      console.log('Testing database connection...');
+      const { data: testData, error: testError } = await supabase
+        .from('products')
+        .select('id')
+        .limit(1);
+      
+      if (testError) {
+        console.error('Database connection error:', testError);
+        throw new Error('Cannot connect to database');
+      }
+      console.log('Database connection OK');
+      
       // First try the 5-parameter version (without payment_method)
+      console.log('Calling finalizeOrder with 5 parameters...');
       let result = await finalizeOrder(finalOrderId, customerData, cartItems, totals);
       console.log('Finalize order result (5 params):', result);
       
@@ -268,9 +287,12 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
       // Redirect to Coinbase checkout
       window.location.href = data.hostedUrl;
       
-    } catch (error) {
-      console.error('Crypto payment error:', error);
-      setValidationError('Payment processing failed. Please try again.');
+    } catch (error: any) {
+      console.error('=== CRYPTO PAYMENT ERROR ===');
+      console.error('Error details:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error stack:', error?.stack);
+      setValidationError(`Payment processing failed: ${error?.message || 'Unknown error'}`);
       setProcessingCrypto(false);
     }
   };
