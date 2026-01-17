@@ -164,13 +164,19 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
       };
       
       // Finalize the order with crypto payment method
+      console.log('Creating crypto order with ID:', finalOrderId);
       const result = await finalizeOrder(finalOrderId, customerData, cartItems, totals, 'crypto');
+      console.log('Finalize order result:', result);
       
       if (!result.success) {
-        setValidationError('Unable to process order. Please try again.');
+        console.error('Order creation failed:', result);
+        setValidationError(`Unable to process order: ${result.message || 'Unknown error'}`);
         setProcessingCrypto(false);
         return;
       }
+      
+      // Wait a moment for the database to commit
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Manually trigger email for crypto orders (since trigger might not be working)
       try {

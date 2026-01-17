@@ -91,7 +91,7 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
               </h1>
               <p className="text-gray-400 text-lg leading-relaxed max-w-md mx-auto">
                 {isCryptoPayment ? (
-                  <>Your cryptocurrency payment is being processed. You'll receive an email confirmation once the blockchain transaction is confirmed.</>
+                  <>Thank you for your order. Your payment is being processed and we'll begin preparing your order shortly.</>
                 ) : (
                   <>Thank you for your order. We've received your information and will process it once we confirm your Venmo payment.</>
                 )}
@@ -142,10 +142,10 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
 
               {/* Confirmation for Crypto */}
               {isCryptoPayment && (
-                <div className="mt-6 p-4 bg-yellow-900/20 border border-yellow-900/30 rounded">
-                  <p className="text-yellow-400 text-sm font-semibold mb-2">⏳ Processing Cryptocurrency Payment</p>
+                <div className="mt-6 p-4 bg-green-900/20 border border-green-900/30 rounded">
+                  <p className="text-green-400 text-sm font-semibold mb-2">✓ Payment Processing</p>
                   <p className="text-gray-300 text-xs leading-relaxed">
-                    Your order has been received and we're waiting for blockchain confirmation. You'll receive an email with order details once your payment is confirmed on the blockchain (usually within 10-30 minutes).
+                    Your order has been received and your payment is being confirmed on the blockchain. Orders typically ship within 1-2 business days.
                   </p>
                 </div>
               )}
@@ -157,11 +157,11 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
               <ol className="space-y-2 text-xs text-gray-400 leading-relaxed">
                 <li className="flex gap-2">
                   <span className="text-neon-blue font-mono">1.</span>
-                  <span>{isCryptoPayment ? 'Your order is being prepared for shipment' : 'Complete your Venmo payment if not already done'}</span>
+                  <span>{isCryptoPayment ? 'Your payment will be confirmed on the blockchain' : 'Complete your Venmo payment if not already done'}</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-neon-blue font-mono">2.</span>
-                  <span>You'll receive an email confirmation with full order details</span>
+                  <span>We'll begin preparing your order for shipment</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-neon-blue font-mono">3.</span>
@@ -169,7 +169,7 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
                 </li>
                 <li className="flex gap-2">
                   <span className="text-neon-blue font-mono">4.</span>
-                  <span>Tracking information will be sent to your email</span>
+                  <span>Products will arrive via USPS Priority Mail</span>
                 </li>
               </ol>
             </div>

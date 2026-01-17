@@ -199,7 +199,7 @@ class InventoryService {
 
       if (error) {
         console.error('Finalize order error:', error);
-        return { success: false, message: 'Unable to complete order' };
+        return { success: false, message: error.message || 'Unable to complete order' };
       }
 
       // Clear session after successful order
