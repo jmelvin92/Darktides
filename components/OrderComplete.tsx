@@ -29,8 +29,17 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
         .eq('order_number', orderNumber)
         .single();
 
+      console.log('Order details fetched:', data);
+      console.log('Payment method:', data?.payment_method);
+      console.log('Payment status:', data?.payment_status);
+
       if (!error && data) {
         setOrderDetails(data);
+      } else if (error) {
+        console.error('Error fetching order:', error);
+        // If we can't fetch the order, but we're coming from Coinbase redirect
+        // we can assume it's a crypto payment
+        setLoading(false);
       }
     } catch (error) {
       console.error('Error fetching order details:', error);
@@ -52,12 +61,16 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
     );
   }
 
-  const paymentMethod = orderDetails?.payment_method || 'venmo';
+  // If we have an order number but no order details, we're likely coming from Coinbase
+  // (since Coinbase redirects before the order might be fully saved)
+  const isComingFromCoinbase = orderNumber && !orderDetails;
+  
+  const paymentMethod = orderDetails?.payment_method || (isComingFromCoinbase ? 'crypto' : 'venmo');
   const paymentStatus = orderDetails?.payment_status;
   const isVenmo = paymentMethod === 'venmo';
   const isCrypto = paymentMethod === 'crypto';
-  // Determine if it's a crypto payment based on payment method or status
-  const isCryptoPayment = isCrypto || paymentStatus === 'pending_crypto';
+  // Determine if it's a crypto payment based on payment method, status, or redirect source
+  const isCryptoPayment = isCrypto || paymentStatus === 'pending_crypto' || isComingFromCoinbase;
 
   return (
     <section className="pt-32 pb-24 px-6 min-h-screen">

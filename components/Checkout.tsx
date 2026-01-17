@@ -174,16 +174,30 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
       
       // Manually trigger email for crypto orders (since trigger might not be working)
       try {
-        const { data: orderData } = await supabase
+        console.log('Fetching order for email:', finalOrderId);
+        const { data: orderData, error: fetchError } = await supabase
           .from('orders')
           .select('*')
           .eq('order_number', finalOrderId)
           .single();
         
+        if (fetchError) {
+          console.error('Error fetching order for email:', fetchError);
+        }
+        
         if (orderData) {
-          await supabase.functions.invoke('send-order-email', {
+          console.log('Sending email for order:', orderData);
+          const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-order-email', {
             body: { record: orderData }
           });
+          
+          if (emailError) {
+            console.error('Email send error:', emailError);
+          } else {
+            console.log('Email sent successfully:', emailResult);
+          }
+        } else {
+          console.error('No order data found to send email');
         }
       } catch (emailError) {
         console.error('Failed to send email:', emailError);
