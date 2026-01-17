@@ -182,14 +182,21 @@ class InventoryService {
         sessionId: this.sessionId 
       });
 
-      const { data, error } = await (supabase.rpc as any)('finalize_order', {
+      // Build RPC parameters - conditionally include payment_method
+      const rpcParams: any = {
         p_order_id: orderId,
         p_session_id: this.sessionId,
         p_customer_data: customerData || null,
         p_cart_items: cartItems || null,
-        p_totals: totals || null,
-        p_payment_method: paymentMethod
-      });
+        p_totals: totals || null
+      };
+      
+      // Only add payment_method if explicitly provided (not default)
+      if (arguments.length >= 5 && paymentMethod) {
+        rpcParams.p_payment_method = paymentMethod;
+      }
+      
+      const { data, error } = await (supabase.rpc as any)('finalize_order', rpcParams);
 
       console.log('🔥 SERVICE Database call parameters:', {
         p_order_id: orderId,

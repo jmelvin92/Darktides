@@ -163,10 +163,29 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
         discount_amount: discountApplied?.amount || 0
       };
       
-      // Finalize the order with crypto payment method
+      // Finalize the order - try with 5 parameters first (old version)
       console.log('Creating crypto order with ID:', finalOrderId);
-      const result = await finalizeOrder(finalOrderId, customerData, cartItems, totals, 'crypto');
-      console.log('Finalize order result:', result);
+      console.log('Customer data:', customerData);
+      console.log('Cart items:', cartItems);
+      console.log('Totals:', totals);
+      
+      // First try the 5-parameter version (without payment_method)
+      let result = await finalizeOrder(finalOrderId, customerData, cartItems, totals);
+      console.log('Finalize order result (5 params):', result);
+      
+      if (!result.success) {
+        // If 5-param fails, try 6-param version
+        console.log('Trying 6-parameter version with crypto payment method');
+        result = await finalizeOrder(finalOrderId, customerData, cartItems, totals, 'crypto');
+        console.log('Finalize order result (6 params):', result);
+      } else {
+        // If 5-param succeeded, update the payment method
+        console.log('Updating payment method to crypto');
+        await supabase
+          .from('orders')
+          .update({ payment_method: 'crypto', payment_status: 'pending_crypto' })
+          .eq('order_number', finalOrderId);
+      }
       
       if (!result.success) {
         console.error('Order creation failed:', result);
