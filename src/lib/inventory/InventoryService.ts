@@ -182,7 +182,7 @@ class InventoryService {
         sessionId: this.sessionId 
       });
 
-      // Build RPC parameters - conditionally include payment_method
+      // Build RPC parameters - ALWAYS include payment_method for crypto
       const rpcParams: any = {
         p_order_id: orderId,
         p_session_id: this.sessionId,
@@ -191,9 +191,12 @@ class InventoryService {
         p_totals: totals || null
       };
       
-      // Only add payment_method if explicitly provided (not default)
-      if (arguments.length >= 5 && paymentMethod) {
+      // ALWAYS include payment_method if provided
+      if (paymentMethod) {
         rpcParams.p_payment_method = paymentMethod;
+        console.log('🔴 CALLING 6-PARAM VERSION WITH PAYMENT METHOD:', paymentMethod);
+      } else {
+        console.log('⚠️ CALLING 5-PARAM VERSION (NO PAYMENT METHOD)');
       }
       
       const { data, error } = await (supabase.rpc as any)('finalize_order', rpcParams);

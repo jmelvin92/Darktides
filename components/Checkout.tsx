@@ -195,9 +195,9 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
       console.log('Database connection OK');
       
       // ALWAYS use 6-parameter version for crypto to set correct status
-      console.log('Calling finalizeOrder with crypto payment method...');
+      console.log('🔴 CRYPTO ORDER - Using crypto payment method to set pending status');
       const result = await finalizeOrder(finalOrderId, customerData, cartItems, totals, 'crypto');
-      console.log('Finalize order result:', result);
+      console.log('🔴 CRYPTO ORDER RESULT:', result);
       
       // Remove the else block that was updating payment method - not needed anymore
       
