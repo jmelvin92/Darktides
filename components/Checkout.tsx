@@ -56,7 +56,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
   const { validateCart, finalizeOrder } = useInventory();
 
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const shipping = 15.00;
+  const shipping = 0.00; // Temporarily disabled for testing
   const discountAmount = discountApplied?.amount || 0;
   const total = subtotal + shipping - discountAmount;
 
@@ -170,6 +170,24 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
         setValidationError('Unable to process order. Please try again.');
         setProcessingCrypto(false);
         return;
+      }
+      
+      // Manually trigger email for crypto orders (since trigger might not be working)
+      try {
+        const { data: orderData } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('order_number', finalOrderId)
+          .single();
+        
+        if (orderData) {
+          await supabase.functions.invoke('send-order-email', {
+            body: { record: orderData }
+          });
+        }
+      } catch (emailError) {
+        console.error('Failed to send email:', emailError);
+        // Don't block the order, just log the error
       }
       
       // Create Coinbase charge
