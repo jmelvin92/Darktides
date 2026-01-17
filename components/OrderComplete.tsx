@@ -22,30 +22,47 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
     if (!orderNumber) return;
     
     setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('order_number', orderNumber)
-        .single() as any;
+    let retries = 0;
+    const maxRetries = 3;
+    const retryDelay = 1000; // Start with 1 second
+    
+    while (retries < maxRetries) {
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('order_number', orderNumber)
+          .single() as any;
 
-      console.log('Order details fetched:', data);
-      console.log('Payment method:', data?.payment_method);
-      console.log('Payment status:', data?.payment_status);
-
-      if (!error && data) {
-        setOrderDetails(data);
-      } else if (error) {
-        console.error('Error fetching order:', error);
-        // If we can't fetch the order, but we're coming from Coinbase redirect
-        // we can assume it's a crypto payment
-        setLoading(false);
+        if (!error && data) {
+          console.log('Order details fetched:', data);
+          console.log('Payment method:', data?.payment_method);
+          console.log('Payment status:', data?.payment_status);
+          setOrderDetails(data);
+          setLoading(false);
+          return; // Success - exit function
+        } else if (error && error.code === 'PGRST116') {
+          // Row not found - retry with exponential backoff
+          retries++;
+          if (retries < maxRetries) {
+            console.log(`Order not found yet, retrying in ${retryDelay * retries}ms (attempt ${retries}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay * retries));
+          }
+        } else if (error) {
+          // Other error - log but don't retry
+          console.error('Error fetching order:', error);
+          break;
+        }
+      } catch (error) {
+        console.error('Error fetching order details:', error);
+        break;
       }
-    } catch (error) {
-      console.error('Error fetching order details:', error);
-    } finally {
-      setLoading(false);
     }
+    
+    // If we get here, we couldn't fetch the order after retries
+    // But if we're coming from Coinbase redirect, that's ok
+    console.log('Could not fetch order after retries, assuming Coinbase redirect');
+    setLoading(false);
   };
 
   if (loading) {
