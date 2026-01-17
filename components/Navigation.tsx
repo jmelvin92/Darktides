@@ -4,8 +4,8 @@ import { Menu, X, ShoppingBag } from 'lucide-react';
 import Logo from './Logo';
 
 interface NavProps {
-  currentView: 'home' | 'store' | 'checkout';
-  onNavigate: (view: 'home' | 'store' | 'checkout', sectionId?: string) => void;
+  currentView: 'home' | 'store' | 'checkout' | 'order-complete';
+  onNavigate: (view: 'home' | 'store' | 'checkout' | 'order-complete', sectionId?: string) => void;
   cartCount: number;
 }
 
