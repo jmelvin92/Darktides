@@ -11,6 +11,7 @@ interface OrderCompleteProps {
 const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome }) => {
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
     if (orderNumber) {
@@ -18,13 +19,32 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
     }
   }, [orderNumber]);
 
+  const sendOrderEmail = async (orderData: any) => {
+    try {
+      console.log('Sending order confirmation email for crypto payment...');
+      setEmailSent(true); // Mark as sent immediately to prevent duplicates
+      
+      const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-order-email', {
+        body: { record: orderData }
+      });
+      
+      if (emailError) {
+        console.error('Email send error:', emailError);
+      } else {
+        console.log('Email sent successfully:', emailResult);
+      }
+    } catch (error) {
+      console.error('Failed to send email:', error);
+    }
+  };
+
   const fetchOrderDetails = async () => {
     if (!orderNumber) return;
     
     setLoading(true);
     let retries = 0;
-    const maxRetries = 3;
-    const retryDelay = 1000; // Start with 1 second
+    const maxRetries = 5; // Increased from 3 to 5
+    const retryDelay = 2000; // Start with 2 seconds instead of 1
     
     while (retries < maxRetries) {
       try {
@@ -39,6 +59,12 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
           console.log('Payment method:', data?.payment_method);
           console.log('Payment status:', data?.payment_status);
           setOrderDetails(data);
+          
+          // Send email for crypto orders when we arrive from Coinbase
+          if (data.payment_method === 'crypto' && !emailSent) {
+            sendOrderEmail(data);
+          }
+          
           setLoading(false);
           return; // Success - exit function
         } else if (!data && !error) {

@@ -235,42 +235,8 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
         return;
       }
       
-      // Wait longer for the database to commit the transaction
-      console.log('Waiting for database to commit...');
-      await new Promise(resolve => setTimeout(resolve, 3000)); // Increased to 3 seconds
-      
-      // Manually trigger email for crypto orders (since trigger might not be working)
-      try {
-        console.log('Fetching order for email:', finalOrderId);
-        // Use untyped query to avoid type issues
-        const { data: orderData, error: fetchError } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('order_number', finalOrderId)
-          .maybeSingle(); // Use maybeSingle instead of single to handle no results
-        
-        if (fetchError) {
-          console.error('Error fetching order for email:', fetchError);
-        }
-        
-        if (orderData) {
-          console.log('Sending email for order:', orderData);
-          const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-order-email', {
-            body: { record: orderData }
-          });
-          
-          if (emailError) {
-            console.error('Email send error:', emailError);
-          } else {
-            console.log('Email sent successfully:', emailResult);
-          }
-        } else {
-          console.error('No order data found to send email');
-        }
-      } catch (emailError) {
-        console.error('Failed to send email:', emailError);
-        // Don't block the order, just log the error
-      }
+      // Don't send email here - wait until they complete payment on Coinbase
+      // The email will be sent from OrderComplete component after redirect
       
       // Create Coinbase charge
       const { data, error } = await supabase.functions.invoke('create-coinbase-charge', {
