@@ -27,7 +27,7 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
         .from('orders')
         .select('*')
         .eq('order_number', orderNumber)
-        .single();
+        .single() as any;
 
       console.log('Order details fetched:', data);
       console.log('Payment method:', data?.payment_method);
