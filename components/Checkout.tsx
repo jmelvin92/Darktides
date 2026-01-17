@@ -121,10 +121,13 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
   };
 
   const handlePaymentMethodContinue = async () => {
+    console.log('Payment method selected:', paymentMethod);
     if (paymentMethod === 'crypto') {
+      console.log('Processing crypto payment...');
       // Skip the payment screen and go straight to Coinbase
       await handleCryptoPayment();
     } else {
+      console.log('Showing Venmo payment screen...');
       // Show Venmo payment screen
       setStep('payment');
     }
@@ -561,7 +564,14 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
                     
                     <div className="pt-4 border-t border-white/10">
                       <button
-                        onClick={handlePaymentMethodContinue}
+                        onClick={async () => {
+                          console.log('Button clicked! Payment method:', paymentMethod);
+                          try {
+                            await handlePaymentMethodContinue();
+                          } catch (error) {
+                            console.error('Button click error:', error);
+                          }
+                        }}
                         disabled={processingCrypto}
                         className="w-full bg-neon-blue text-obsidian font-bold py-4 uppercase tracking-[0.2em] text-sm hover:bg-neon-blue/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
