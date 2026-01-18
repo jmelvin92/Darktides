@@ -107,8 +107,13 @@ src/lib/supabase/migrations/002_orders_and_email.sql  # Enhanced orders table
 
 #### Checkout Flow (CRITICAL - DO NOT BREAK):
 1. **Add to Cart**: `handleAdd()` in Store.tsx → calls `checkAndReserve()` → checks stock availability only
-2. **Checkout Validation**: `handleInitiatePayment()` in Checkout.tsx → validates all items  
-3. **Payment Complete**: `handleVenmoConfirm()` in Checkout.tsx → calls `finalizeOrder()` → deducts stock with row locking
+2. **Payment Method Selection**: Customer chooses Venmo or Coinbase (crypto)
+3. **Order Processing**: 
+   - **Venmo**: `finalizeOrder()` with 5 params → status='confirmed' → email sent immediately
+   - **Crypto**: `finalizeOrder()` with 6 params (payment_method='crypto') → status='pending' → no email yet
+4. **Payment Complete**: 
+   - **Venmo**: `handleVenmoConfirm()` → order already confirmed
+   - **Crypto**: Redirect from Coinbase → `confirm_crypto_order()` → status='confirmed' → email sent
 
 #### Out-of-Stock Behavior:
 - Products with `stock_quantity = 0` stay visible
@@ -266,9 +271,53 @@ src/contexts/
    - Popular products
    - Monthly trends
 
+## Recently Implemented Features
+
+### Feature #6: Cryptocurrency Payment Support via Coinbase Commerce (COMPLETED - January 2025)
+**Status**: ✅ Production-ready
+**Integration**: Coinbase Commerce API
+
+#### Key Features:
+- **Bitcoin/Ethereum/USDC payments** - Customers can pay with major cryptocurrencies
+- **Professional payment method selector** - Radio button UI with Venmo and Coinbase options
+- **Streamlined checkout flow** - Direct redirect to Coinbase after selection
+- **Proper order status handling** - Crypto orders start with status='pending' to prevent premature emails
+- **Email notifications after payment** - Business owner notified only after successful crypto payment
+
+#### Technical Implementation:
+- **6-parameter finalize_order function** - Supports payment_method parameter (venmo/crypto)
+- **Coinbase Edge Function** - `supabase/functions/create-coinbase-charge/index.ts`
+- **Webhook handler** - `supabase/functions/coinbase-webhook/index.ts` (for future payment confirmations)
+- **Order confirmation page** - Handles redirect from Coinbase with order parameter
+
+#### Critical Fixes Applied:
+1. **Missing database column fix** - Added `last_used_at` to discount_codes table (was causing silent order failures)
+2. **Order ID consistency** - Fixed finalize_order to return order_number instead of UUID
+3. **Payment method routing** - Crypto orders now correctly use 6-parameter version with payment_method='crypto'
+4. **Email timing** - Emails only sent after payment completion, not on checkout initiation
+
+#### Database Changes:
+```sql
+-- Added columns to orders table
+ALTER TABLE orders ADD COLUMN payment_method TEXT DEFAULT 'venmo';
+ALTER TABLE orders ADD COLUMN coinbase_charge_code TEXT;
+ALTER TABLE orders ADD COLUMN crypto_payment_details JSONB;
+
+-- Fixed discount_codes table
+ALTER TABLE discount_codes ADD COLUMN IF NOT EXISTS last_used_at TIMESTAMP WITH TIME ZONE;
+
+-- New function for confirming crypto orders
+CREATE FUNCTION confirm_crypto_order(p_order_number TEXT) ...
+```
+
+#### Environment Variables Required:
+```env
+COINBASE_COMMERCE_API_KEY=your_key_here  # In Supabase Edge Function secrets
+```
+
 ## Future Features Planned
 
-### Feature #6: [To be documented when implemented]  
+### Feature #7: [To be documented when implemented]  
 **Status**: 📋 Not yet started
 
 ## Development Guidelines
@@ -319,9 +368,11 @@ src/contexts/
 
 ## Known Issues & Limitations
 - ~~Reservation expiry~~ - RESOLVED (reservations disabled for simplicity)
+- ~~Order creation failing for crypto~~ - RESOLVED (missing database column and function signature issues fixed)
 - Admin tool requires manual stock adjustments (or direct SQL)
 - No automated low-stock alerts yet
-- **CRITICAL**: Must apply `apply_migration.sql` before testing checkout
+- Browser caching can be aggressive - users may need hard refresh (Cmd+Shift+R) after deployments
+- GitHub Pages CDN can take 5-10 minutes to propagate changes globally
 
 ## Security Notes
 - Uses Supabase Row Level Security (RLS)
