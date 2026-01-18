@@ -121,29 +121,21 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
   };
 
   const handlePaymentMethodContinue = async () => {
-    console.log('Payment method selected:', paymentMethod);
     if (paymentMethod === 'crypto') {
-      console.log('Processing crypto payment...');
       // Skip the payment screen and go straight to Coinbase
       await handleCryptoPayment();
     } else {
-      console.log('Showing Venmo payment screen...');
       // Show Venmo payment screen
       setStep('payment');
     }
   };
 
   const handleCryptoPayment = async () => {
-    console.log('=== STARTING CRYPTO PAYMENT PROCESS ===');
-    console.log('Cart:', cart);
-    console.log('Shipping data:', shippingData);
-    
     setProcessingCrypto(true);
     setValidationError(null);
     
     // Generate order ID
     const finalOrderId = `DT-${Math.random().toString(36).substring(7).toUpperCase()}`;
-    console.log('Generated order ID:', finalOrderId);
     
     try {
       // First, finalize the order in our database
@@ -175,34 +167,9 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
         discount_amount: discountApplied?.amount || 0
       };
       
-      // Finalize the order - try with 5 parameters first (old version)
-      console.log('Creating crypto order with ID:', finalOrderId);
-      console.log('Customer data:', customerData);
-      console.log('Cart items:', cartItems);
-      console.log('Totals:', totals);
-      
-      // First check if we can even connect to the database
-      console.log('Testing database connection...');
-      const { data: testData, error: testError } = await supabase
-        .from('products')
-        .select('id')
-        .limit(1);
-      
-      if (testError) {
-        console.error('Database connection error:', testError);
-        throw new Error('Cannot connect to database');
-      }
-      console.log('Database connection OK');
-      
-      // ALWAYS use 6-parameter version for crypto to set correct status
-      console.log('🔴 CRYPTO ORDER - Using crypto payment method to set pending status');
+      // Use 6-parameter version for crypto to set correct status
       const result = await finalizeOrder(finalOrderId, customerData, cartItems, totals, 'crypto');
-      console.log('🔴 CRYPTO ORDER RESULT:', result);
-      
-      // Remove the else block that was updating payment method - not needed anymore
-      
       if (!result.success) {
-        console.error('Order creation failed:', result);
         setValidationError(`Unable to process order: ${result.message || 'Unknown error'}`);
         setProcessingCrypto(false);
         return;
@@ -506,11 +473,9 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
                     <div className="pt-4 border-t border-white/10">
                       <button
                         onClick={async () => {
-                          console.log('Button clicked! Payment method:', paymentMethod);
                           try {
                             await handlePaymentMethodContinue();
                           } catch (error) {
-                            console.error('Button click error:', error);
                           }
                         }}
                         disabled={processingCrypto}
