@@ -273,7 +273,43 @@ src/contexts/
 
 ## Recently Implemented Features
 
-### Feature #6: Cryptocurrency Payment Support via Coinbase Commerce (COMPLETED - January 2025)
+### Feature #6: Peptide Dosage Calculator (COMPLETED - January 2025)
+**Status**: ✅ Production-ready
+**Access**: `/calculator` tab on main site
+**URL**: `darktideslab.com/calculator`
+
+#### Key Features:
+- **Three Calculation Modes**:
+  - **Reconstitution Mode**: Calculates bacteriostatic water volume needed for 10-unit doses
+  - **Peptide Mode**: Standard dose calculator with syringe unit conversion
+  - **Blend Mode**: For dual-peptide vials, calculates yield of both compounds
+- **Interactive Syringe Visualizer**: Shows exact draw point on virtual syringe
+- **Preset System**: Quick-select dropdown with DarkTides catalog items and common research peptides
+- **Multiple Syringe Support**: U-100, U-50, U-40, U-30 insulin syringes
+- **Safety Features**: Input validation with min/max limits, helpful tooltips, aseptic technique reminders
+- **Mobile Optimized**: Touch-friendly controls, responsive layout, no zoom on input focus
+
+#### Core Files:
+```
+components/Calculator.tsx     # Main calculator component with all logic
+components/Navigation.tsx     # Updated to include Calculator tab
+src/components/MainSite.tsx  # Added calculator to view routing
+src/index.css               # Added neon glow effects and animations
+```
+
+#### Technical Details:
+- Uses React hooks for state management (useState, useMemo)
+- Real-time calculations update as user types
+- Preset dropdown maintains selected name for better UX
+- Glass morphism UI consistent with site theme
+- Supports both MG and MCG dose units with automatic conversion
+- Animated chevron on dropdown, visual feedback on interactions
+
+#### Presets Include:
+- **DarkTides Catalog**: GLP-3, GHK-Cu, MOTS-C, TESA, CJC-1295/Ipamorelin, KPV, MT-1, NAD+, 5-Amino-1MQ
+- **Common Peptides**: BPC-157, TB-500, Semax, Selank
+
+### Feature #7: Cryptocurrency Payment Support via Coinbase Commerce (COMPLETED - January 2025)
 **Status**: ✅ Production-ready
 **Integration**: Coinbase Commerce API
 
@@ -317,7 +353,7 @@ COINBASE_COMMERCE_API_KEY=your_key_here  # In Supabase Edge Function secrets
 
 ## Future Features Planned
 
-### Feature #7: [To be documented when implemented]  
+### Feature #8: [To be documented when implemented]  
 **Status**: 📋 Not yet started
 
 ## Development Guidelines
