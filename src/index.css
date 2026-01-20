@@ -26,3 +26,37 @@
 .animate-shimmer-reverse {
   animation: shimmer-reverse 3s ease-in-out infinite;
 }
+
+/* Neon glow effect for calculator */
+.neon-glow {
+  text-shadow: 
+    0 0 10px rgba(0, 243, 255, 0.8),
+    0 0 20px rgba(0, 243, 255, 0.6),
+    0 0 30px rgba(0, 243, 255, 0.4),
+    0 0 40px rgba(0, 243, 255, 0.2);
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(10, 10, 15, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom color classes */
+.bg-obsidian {
+  background-color: #0a0a0f;
+}
+
+.text-neon-blue {
+  color: #00f3ff;
+}
+
+.bg-neon-blue {
+  background-color: #00f3ff;
+}
+
+.border-neon-blue {
+  border-color: #00f3ff;
+}
