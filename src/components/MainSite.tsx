@@ -11,10 +11,9 @@ import Footer from '../../components/Footer';
 import AgeVerification from '../../components/AgeVerification';
 import Checkout from '../../components/Checkout';
 import OrderComplete from '../../components/OrderComplete';
-import Calculator from '../../components/Calculator';
 import { BrandTheme } from '../../theme';
 
-export type ViewState = 'home' | 'store' | 'checkout' | 'order-complete' | 'calculator';
+export type ViewState = 'home' | 'store' | 'checkout' | 'order-complete';
 
 export interface CartItem {
   id: string;
@@ -125,8 +124,6 @@ function MainSite() {
             orderNumber={orderNumber}
             onReturnHome={() => handleNavigate('home')}
           />
-        ) : currentView === 'calculator' ? (
-          <Calculator />
         ) : null}
       </main>
 
