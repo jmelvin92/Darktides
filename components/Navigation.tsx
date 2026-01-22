@@ -4,8 +4,8 @@ import { Menu, X, ShoppingBag } from 'lucide-react';
 import Logo from './Logo';
 
 interface NavProps {
-  currentView: 'home' | 'store' | 'checkout' | 'order-complete';
-  onNavigate: (view: 'home' | 'store' | 'checkout' | 'order-complete', sectionId?: string) => void;
+  currentView: 'home' | 'store' | 'checkout' | 'order-complete' | 'contact';
+  onNavigate: (view: 'home' | 'store' | 'checkout' | 'order-complete' | 'contact', sectionId?: string) => void;
   cartCount: number;
 }
 
@@ -27,6 +27,8 @@ const Navigation: React.FC<NavProps> = ({ currentView, onNavigate, cartCount }) 
     
     if (sectionId === 'store') {
       onNavigate('store');
+    } else if (sectionId === 'contact') {
+      onNavigate('contact');
     } else if (sectionId === 'checkout') {
       onNavigate('checkout');
     } else if (sectionId === 'home' || sectionId === '') {
@@ -39,6 +41,7 @@ const Navigation: React.FC<NavProps> = ({ currentView, onNavigate, cartCount }) 
   const navLinks = [
     { label: 'Home', id: 'home' },
     { label: 'Catalog', id: 'store' },
+    { label: 'Contact', id: 'contact' },
   ];
 
   return (
@@ -62,12 +65,12 @@ const Navigation: React.FC<NavProps> = ({ currentView, onNavigate, cartCount }) 
               href={`#${link.id}`}
               onClick={(e) => handleLinkClick(e, link.id)}
               className={`text-[10px] font-mono uppercase tracking-[0.2em] hover:text-white transition-colors duration-300 relative group ${
-                (link.id === 'home' && currentView === 'home') || (link.id === 'store' && currentView === 'store') ? 'text-neon-blue' : 'text-gray-400'
+                (link.id === 'home' && currentView === 'home') || (link.id === 'store' && currentView === 'store') || (link.id === 'contact' && currentView === 'contact') ? 'text-neon-blue' : 'text-gray-400'
               }`}
             >
               {link.label}
               <span className={`absolute -bottom-2 left-0 h-[1px] bg-neon-blue transition-all duration-300 ${
-                 (link.id === 'home' && currentView === 'home') || (link.id === 'store' && currentView === 'store') ? 'w-full' : 'w-0 group-hover:w-full'
+                 (link.id === 'home' && currentView === 'home') || (link.id === 'store' && currentView === 'store') || (link.id === 'contact' && currentView === 'contact') ? 'w-full' : 'w-0 group-hover:w-full'
               }`}></span>
             </a>
           ))}

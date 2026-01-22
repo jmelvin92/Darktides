@@ -1,98 +1,227 @@
 import React, { useState } from 'react';
+import { Send, Mail, User, MessageSquare, CheckCircle2 } from 'lucide-react';
 import FadeIn from './FadeIn';
-import { ChevronRight, Lock } from 'lucide-react';
+import { supabase } from '../src/lib/supabase/client';
 
 const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    interest: 'GLP-1'
+    subject: '',
+    message: ''
   });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate form submission
-    alert('Request intercepted. We will contact you if your clearance is approved.');
+    
+    // Validation
+    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setSending(true);
+    setError(null);
+
+    try {
+      const { data, error: sendError } = await supabase.functions.invoke('send-contact-email', {
+        body: {
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message
+        }
+      });
+
+      if (sendError) {
+        throw sendError;
+      }
+
+      // Success
+      setSent(true);
+      setFormData({ name: '', email: '', subject: '', message: '' });
+      
+      // Reset sent status after 5 seconds
+      setTimeout(() => setSent(false), 5000);
+    } catch (err: any) {
+      console.error('Error sending message:', err);
+      setError('Failed to send message. Please try again later.');
+    } finally {
+      setSending(false);
+    }
   };
+
+  if (sent) {
+    return (
+      <section className="pt-32 pb-24 px-6 min-h-screen flex items-center justify-center">
+        <FadeIn>
+          <div className="glass-panel p-12 max-w-lg w-full text-center space-y-6 border-t-2 border-t-neon-teal">
+            <div className="flex justify-center">
+              <div className="w-20 h-20 bg-neon-teal/10 rounded-full flex items-center justify-center border-2 border-neon-teal/30">
+                <CheckCircle2 className="w-10 h-10 text-neon-teal" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-white uppercase tracking-wider">Message Sent!</h2>
+            <p className="text-gray-400">
+              Thank you for contacting us. We'll get back to you within 24-48 hours.
+            </p>
+            <button
+              onClick={() => setSent(false)}
+              className="text-neon-blue font-mono text-xs uppercase tracking-[0.2em] border border-neon-blue/20 px-8 py-3 hover:bg-neon-blue/10 transition-all"
+            >
+              Send Another Message
+            </button>
+          </div>
+        </FadeIn>
+      </section>
+    );
+  }
 
   return (
-    <section id="contact" className="py-32 px-6 relative overflow-hidden">
-       {/* Background accent */}
-       <div className="absolute bottom-0 left-0 w-full h-[300px] bg-gradient-to-t from-neon-blue/5 to-transparent pointer-events-none"></div>
+    <section className="pt-32 pb-24 px-6 min-h-screen">
+      <FadeIn>
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-5xl font-bold text-white uppercase tracking-tighter mb-4">
+              Contact Us
+            </h1>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+              Have questions about our peptides or research? We're here to help. Send us a message and we'll respond within 24-48 hours.
+            </p>
+          </div>
 
-       <div className="max-w-xl mx-auto relative z-10">
-         <FadeIn>
-           <div className="text-center mb-12">
-             <h2 className="text-3xl font-bold text-white mb-4">Request Access</h2>
-             <p className="text-gray-400 text-sm">Join the wave. Entrance is limited to qualified researchers and selected institutional candidates.</p>
-           </div>
-         </FadeIn>
+          <div className="glass-panel p-8 md:p-12 border-t-2 border-t-neon-blue">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Name Field */}
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest">
+                    <User size={12} />
+                    Name
+                    <span className="text-red-500 font-bold">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:border-neon-blue focus:outline-none transition-colors"
+                    placeholder="Your full name"
+                  />
+                </div>
 
-         <FadeIn delay={200}>
-           <form onSubmit={handleSubmit} className="glass-panel p-8 md:p-12 space-y-8 relative border-t-2 border-t-neon-blue/20">
-             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-[2px] bg-neon-blue blur-[2px]"></div>
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest">
+                    <Mail size={12} />
+                    Email
+                    <span className="text-red-500 font-bold">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:border-neon-blue focus:outline-none transition-colors"
+                    placeholder="your@email.com"
+                  />
+                </div>
+              </div>
 
-             <div className="group">
-               <label className="block text-xs font-mono text-gray-500 uppercase tracking-widest mb-2 group-focus-within:text-neon-blue transition-colors">Name</label>
-               <input 
-                 type="text" 
-                 name="name"
-                 required
-                 className="w-full bg-transparent border-b border-gray-700 py-2 text-white focus:outline-none focus:border-neon-blue transition-colors rounded-none placeholder-gray-700 font-light"
-                 placeholder="IDENTIFIER"
-                 onChange={handleChange}
-               />
-             </div>
+              {/* Subject Field */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest">
+                  <MessageSquare size={12} />
+                  Subject
+                  <span className="text-red-500 font-bold">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:border-neon-blue focus:outline-none transition-colors"
+                  placeholder="What's this about?"
+                />
+              </div>
 
-             <div className="group">
-               <label className="block text-xs font-mono text-gray-500 uppercase tracking-widest mb-2 group-focus-within:text-neon-blue transition-colors">Secure Email</label>
-               <input 
-                 type="email" 
-                 name="email"
-                 required
-                 className="w-full bg-transparent border-b border-gray-700 py-2 text-white focus:outline-none focus:border-neon-blue transition-colors rounded-none placeholder-gray-700 font-light"
-                 placeholder="CONTACT VECTOR"
-                 onChange={handleChange}
-               />
-             </div>
+              {/* Message Field */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest">
+                  <MessageSquare size={12} />
+                  Message
+                  <span className="text-red-500 font-bold">*</span>
+                </label>
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  rows={6}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:border-neon-blue focus:outline-none transition-colors resize-none"
+                  placeholder="Tell us what's on your mind..."
+                />
+              </div>
 
-             <div className="group">
-               <label className="block text-xs font-mono text-gray-500 uppercase tracking-widest mb-2 group-focus-within:text-neon-blue transition-colors">Area of Interest</label>
-               <select 
-                 name="interest"
-                 className="w-full bg-transparent border-b border-gray-700 py-2 text-white focus:outline-none focus:border-neon-blue transition-colors rounded-none [&>option]:bg-obsidian font-light"
-                 onChange={handleChange}
-               >
-                 <option value="GLP-1">GLP-1 Research</option>
-                 <option value="Metabolic">Metabolic Systems</option>
-                 <option value="Endocrine">Endocrine Optimization</option>
-                 <option value="Partnership">Institutional Partnership</option>
-               </select>
-             </div>
-             
-             <div className="p-3 bg-red-950/20 border border-red-900/30 rounded flex items-start gap-3">
-                <span className="text-red-500 font-mono text-xs font-bold mt-1">WARNING:</span>
-                <p className="text-xs text-red-400/70 leading-relaxed">
-                  By requesting access, you confirm you are a qualified researcher. Products are strictly not for human consumption.
-                </p>
-             </div>
+              {/* Error Message */}
+              {error && (
+                <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+                  {error}
+                </div>
+              )}
 
-             <button type="submit" className="w-full bg-white/5 border border-white/10 text-white py-4 font-mono text-sm tracking-[0.2em] uppercase hover:bg-neon-blue/10 hover:border-neon-blue hover:text-neon-blue transition-all duration-300 flex items-center justify-center gap-2 group shadow-[0_0_20px_rgba(0,0,0,0.5)]">
-               Initiate Protocol
-               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-             </button>
+              {/* Submit Button */}
+              <div className="flex justify-center pt-4">
+                <button
+                  type="submit"
+                  disabled={sending}
+                  className={`flex items-center gap-3 px-8 py-4 font-bold uppercase tracking-[0.2em] text-xs transition-all ${
+                    sending 
+                      ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
+                      : 'bg-neon-blue text-obsidian hover:bg-neon-blue/90'
+                  }`}
+                >
+                  {sending ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Send Message
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
 
-             <div className="flex items-center justify-center gap-2 text-[10px] text-gray-600 font-mono mt-6">
-                <Lock className="w-3 h-3 text-neon-teal/50" />
-                <span className="text-neon-teal/50">ENCRYPTED TRANSMISSION</span>
-             </div>
-           </form>
-         </FadeIn>
-       </div>
+            {/* Contact Info */}
+            <div className="mt-12 pt-8 border-t border-white/10 text-center">
+              <p className="text-gray-500 text-xs uppercase tracking-wider mb-2">
+                For Research Inquiries Only
+              </p>
+              <p className="text-gray-400 text-sm">
+                All products are for laboratory research purposes only
+              </p>
+            </div>
+          </div>
+        </div>
+      </FadeIn>
     </section>
   );
 };

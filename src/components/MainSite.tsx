@@ -11,9 +11,10 @@ import Footer from '../../components/Footer';
 import AgeVerification from '../../components/AgeVerification';
 import Checkout from '../../components/Checkout';
 import OrderComplete from '../../components/OrderComplete';
+import Contact from '../../components/Contact';
 import { BrandTheme } from '../../theme';
 
-export type ViewState = 'home' | 'store' | 'checkout' | 'order-complete';
+export type ViewState = 'home' | 'store' | 'checkout' | 'order-complete' | 'contact';
 
 export interface CartItem {
   id: string;
@@ -124,6 +125,8 @@ function MainSite() {
             orderNumber={orderNumber}
             onReturnHome={() => handleNavigate('home')}
           />
+        ) : currentView === 'contact' ? (
+          <Contact />
         ) : null}
       </main>
 
