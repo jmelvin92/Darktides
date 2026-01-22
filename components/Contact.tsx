@@ -78,7 +78,7 @@ const Contact: React.FC = () => {
             </div>
             <h2 className="text-2xl font-bold text-white uppercase tracking-wider">Message Sent!</h2>
             <p className="text-gray-400">
-              Thank you for contacting us. We'll get back to you within 24-48 hours.
+              Thank you for contacting us. We'll get back to you within 24 hours.
             </p>
             <button
               onClick={() => setSent(false)}
@@ -101,7 +101,7 @@ const Contact: React.FC = () => {
               Contact Us
             </h1>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Have questions about our peptides or research? We're here to help. Send us a message and we'll respond within 24-48 hours.
+              Have questions? We're here to help. Send us a message and we'll respond within 24 hours.
             </p>
           </div>
 
