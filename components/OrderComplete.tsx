@@ -144,18 +144,22 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
               <ol className="space-y-2 text-xs text-gray-400 leading-relaxed">
                 <li className="flex gap-2">
                   <span className="text-neon-blue font-mono">1.</span>
-                  <span>{isCryptoPayment ? 'Your order confirmation has been sent to our fulfillment team' : 'Complete your Venmo payment if not already done'}</span>
+                  <span className="text-yellow-400 font-semibold">Do not lose your order number - save it for your records</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-neon-blue font-mono">2.</span>
-                  <span>We'll begin preparing your order for shipment</span>
+                  <span>{isCryptoPayment ? 'Your order confirmation has been sent to our fulfillment team' : 'Complete your Venmo payment if not already done'}</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-neon-blue font-mono">3.</span>
-                  <span>Your order will be shipped within 1-2 business days</span>
+                  <span>We'll begin preparing your order for shipment</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-neon-blue font-mono">4.</span>
+                  <span>Your order will be shipped within 1-2 business days</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-neon-blue font-mono">5.</span>
                   <span>Products will arrive via USPS Priority Mail</span>
                 </li>
               </ol>

@@ -310,6 +310,11 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
             <div className="p-4 bg-white/5 border border-white/10 rounded font-mono text-[10px] text-gray-500 uppercase tracking-widest">
               Order ID: {orderId || 'Loading...'} // Status: Awaiting Payment
             </div>
+            <div className="p-3 bg-yellow-900/20 border border-yellow-900/30 rounded">
+              <p className="text-yellow-400 text-xs font-semibold text-center">
+                ⚠️ Do not lose your order number - save it for your records
+              </p>
+            </div>
             <button 
               onClick={handleReturnToHome} 
               className="w-full bg-neon-teal text-obsidian font-bold py-4 uppercase tracking-[0.2em] text-xs hover:bg-neon-teal/90 transition-all"
