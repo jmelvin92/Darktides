@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
-import { Eye, Download, Check, X } from 'lucide-react';
+import { Eye, Download, Check, X, Mail, Send } from 'lucide-react';
 import type { Order as OrderType } from '../../lib/supabase/database.types';
 
 // Parse the JSON fields from the database order
@@ -92,6 +92,42 @@ function AdminOrders() {
 
     if (!error) {
       loadOrders();
+    }
+  };
+
+  const sendOrderEmail = async (order: Order) => {
+    try {
+      console.log('Manually sending email for order:', order.order_number);
+      
+      // Get the full order data from database first
+      const { data: fullOrder, error: fetchError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', order.id)
+        .single();
+      
+      if (fetchError || !fullOrder) {
+        alert('Failed to fetch order details');
+        return;
+      }
+
+      // Send the email via edge function
+      const { data, error } = await supabase.functions.invoke('send-order-email', {
+        body: {
+          record: fullOrder
+        }
+      });
+
+      if (error) {
+        console.error('Error sending email:', error);
+        alert('Failed to send email: ' + error.message);
+      } else {
+        console.log('Email sent successfully:', data);
+        alert('Email sent successfully to business email!');
+      }
+    } catch (err) {
+      console.error('Failed to send email:', err);
+      alert('Failed to send email. Check console for details.');
     }
   };
 
@@ -242,12 +278,22 @@ function AdminOrders() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => setSelectedOrder(order)}
-                      className="text-gray-400 hover:text-neon-blue transition-colors"
-                    >
-                      <Eye size={16} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className="text-gray-400 hover:text-neon-blue transition-colors"
+                        title="View Details"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button
+                        onClick={() => sendOrderEmail(order)}
+                        className="text-gray-400 hover:text-green-400 transition-colors"
+                        title="Send Email Notification"
+                      >
+                        <Mail size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -324,9 +370,18 @@ function AdminOrders() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-charcoal border border-gray-800 rounded-lg p-4 md:p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-4">
-              <h2 className="text-lg md:text-xl font-semibold text-white">
-                Order {selectedOrder.order_number}
-              </h2>
+              <div>
+                <h2 className="text-lg md:text-xl font-semibold text-white">
+                  Order {selectedOrder.order_number}
+                </h2>
+                <button
+                  onClick={() => sendOrderEmail(selectedOrder)}
+                  className="mt-2 flex items-center gap-2 px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-sm rounded-lg transition-colors"
+                >
+                  <Send size={14} />
+                  <span>Send Email Notification</span>
+                </button>
+              </div>
               <button
                 onClick={() => setSelectedOrder(null)}
                 className="text-gray-400 hover:text-white p-1"
