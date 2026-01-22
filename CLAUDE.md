@@ -351,9 +351,60 @@ CREATE FUNCTION confirm_crypto_order(p_order_number TEXT) ...
 COINBASE_COMMERCE_API_KEY=your_key_here  # In Supabase Edge Function secrets
 ```
 
+### Feature #8: Contact Us Page (COMPLETED - January 2025)
+**Status**: ✅ Production-ready
+**Access**: `/contact` tab on main site
+**Email Destination**: `darktidesresearch@protonmail.com`
+
+#### Key Features:
+- **Contact Form** with Name, Email, Subject, and Message fields
+- **Form validation** and error handling
+- **Loading states** and success confirmation
+- **Professional HTML email** sent via Resend API
+- **24-hour response time** commitment
+
+#### Core Files:
+```
+components/Contact.tsx                # Contact form component
+components/Navigation.tsx              # Updated with Contact tab
+supabase/functions/send-contact-email/index.ts  # Edge function for emails
+```
+
+#### Edge Function Deployment:
+```bash
+supabase functions deploy send-contact-email
+```
+
+## Recent Updates (January 2025)
+
+### Navigation Changes:
+- **Calculator removed** from navigation menu (feature hidden but code preserved)
+- Calculator component remains in codebase for potential future reactivation
+
+### Order Confirmation Improvements:
+- Added prominent "Do not lose your order number" warning in yellow text
+- Removed unnecessary "Payment Method" field from order details
+- Cleaner order confirmation display
+
+### Crypto Payment Email Fix:
+**Problem**: Crypto payment emails weren't sending because:
+- Venmo orders insert with status='confirmed' (email triggers)
+- Crypto orders insert with status='pending' (no email trigger)
+- Database trigger only fired on INSERT, not UPDATE
+
+**Solution** (in `fix_crypto_emails_final.sql`):
+- Make crypto orders insert as 'confirmed' just like Venmo
+- This ensures the same trigger that works for Venmo also works for crypto
+- Apply this SQL in Supabase to fix crypto email notifications
+
+### Admin Panel Email Features:
+- Added manual "Send Email" button for each order in admin panel
+- Can resend order notification emails at any time
+- Useful fallback if automatic emails fail
+
 ## Future Features Planned
 
-### Feature #8: [To be documented when implemented]  
+### Feature #9: [To be documented when implemented]  
 **Status**: 📋 Not yet started
 
 ## Development Guidelines
