@@ -19,20 +19,35 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
     }
   }, [orderNumber]);
 
-  const confirmCryptoOrder = async (orderNumber: string) => {
+  const confirmCryptoOrder = async (orderNumber: string, orderData?: any) => {
     try {
-      console.log('Confirming crypto order and triggering email...');
+      console.log('Confirming crypto order and sending email...');
       setEmailSent(true); // Mark as sent immediately to prevent duplicates
       
-      // Call the new function to mark order as confirmed
-      // This will trigger the database email trigger
+      // First, update the order status to confirmed
       const { data, error } = await (supabase as any)
         .rpc('confirm_crypto_order', { p_order_number: orderNumber });
       
       if (error) {
         console.error('Error confirming crypto order:', error);
-      } else {
-        console.log('Crypto order confirmed, email will be sent by trigger');
+        return;
+      }
+      
+      // Now directly call the edge function to send the email
+      // This is more reliable than waiting for a database trigger
+      if (orderData) {
+        console.log('Sending email notification for crypto order...');
+        const { data: emailData, error: emailError } = await supabase.functions.invoke('send-order-email', {
+          body: {
+            record: orderData
+          }
+        });
+        
+        if (emailError) {
+          console.error('Error sending email:', emailError);
+        } else {
+          console.log('Email sent successfully:', emailData);
+        }
       }
     } catch (error) {
       console.error('Failed to confirm crypto order:', error);
@@ -62,9 +77,10 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
           setOrderDetails(data);
           
           // Confirm crypto orders when we arrive from Coinbase
-          // This will mark as confirmed and trigger the email
+          // This will mark as confirmed and send the email directly
           if (data.payment_method === 'crypto' && !emailSent && data.status !== 'confirmed') {
-            confirmCryptoOrder(orderNumber);
+            // Pass the full order data so we can send the email with all details
+            confirmCryptoOrder(orderNumber, data);
           }
           
           setLoading(false);
