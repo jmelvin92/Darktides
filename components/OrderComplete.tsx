@@ -97,10 +97,6 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
                   <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Order Number</p>
                   <p className="font-mono text-white">{orderNumber || 'N/A'}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Payment Method</p>
-                  <p className="font-mono text-white capitalize">{paymentMethod === 'crypto' ? 'Cryptocurrency' : 'Venmo'}</p>
-                </div>
                 {orderDetails && (
                   <>
                     <div>
