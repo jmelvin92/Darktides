@@ -60,7 +60,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
   const { validateCart, finalizeOrder } = useInventory();
 
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const shipping = 0.00; // Temporarily disabled for testing
+  const shipping = 15.00; // Standard cold-chain shipping
   const discountAmount = discountApplied?.amount || 0;
   const total = subtotal + shipping - discountAmount;
 
