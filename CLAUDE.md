@@ -402,9 +402,41 @@ supabase functions deploy send-contact-email
 - Can resend order notification emails at any time
 - Useful fallback if automatic emails fail
 
+### Venmo Deep Link Integration (February 2025)
+**Status**: 🧪 In Testing
+**File**: `components/Checkout.tsx` (lines ~509-559)
+
+#### What Changed:
+- **"Pay with Venmo" button** opens Venmo app directly via `venmo://paycharge` deep link
+- Pre-fills recipient and order total amount automatically
+- **Manual fallback section** below with total + @Darktides username for customers who can't use the link
+- Existing "I have sent the Venmo transfer" confirmation button preserved (triggers `handleVenmoConfirm()`)
+
+#### Technical Details:
+- **Deep link format**: `venmo://paycharge?txn=pay&recipients=17753154151&amount={total}`
+- **Recipient**: Phone number `17753154151` — username-based matching (`Darktides`) was showing 2 duplicate accounts, and the Venmo QR code user ID (`2751118610268160810`) was rejected as "not a valid 10-digit number"
+- **Opens via**: `window.open(url, '_blank')` — using `window.location.href` navigated away from the checkout page, causing the user to land on the home page when returning from Venmo (React state lost)
+- **No `note` parameter** in the deep link — customer manually adds name + random emoji per existing instructions
+- **No changes** to `handleVenmoConfirm()`, `finalizeOrder()`, or any inventory/order logic
+
+#### Known Limitations:
+- `venmo://` deep link only works on mobile (desktop users must use manual fallback)
+- Venmo personal accounts don't support callbacks/webhooks — no way to auto-detect payment completion
+- Customer must manually return to browser and tap "I have sent the Venmo transfer" to finalize order and trigger email
+
+#### Still Needs Testing:
+- [ ] Confirm deep link opens Venmo app and pre-fills correct account + amount
+- [ ] Confirm checkout page stays intact when returning from Venmo app
+- [ ] Confirm "I have sent the Venmo transfer" button still finalizes order and sends email
+- [ ] Test with discount code applied (discounted total should appear in deep link)
+
+#### ⚠️ TEMPORARY: Shipping set to $0 for testing
+- Line 63 in Checkout.tsx: `const shipping = 0; // TODO: Restore to 15.00 for production`
+- **MUST restore to `15.00` before deploying to production**
+
 ## Future Features Planned
 
-### Feature #9: [To be documented when implemented]  
+### Feature #9: [To be documented when implemented]
 **Status**: 📋 Not yet started
 
 ## Development Guidelines

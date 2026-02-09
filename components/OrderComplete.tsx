@@ -20,10 +20,12 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
 
   const fetchOrderDetails = async () => {
     if (!orderNumber) return;
-    
+
     setLoading(true);
-    
-    // Try to fetch order details (may not exist yet if coming from Coinbase)
+
+    // Email is sent from Checkout.tsx (which has a working supabase client)
+    // This component only fetches order details for display
+
     try {
       const { data, error } = await supabase
         .from('orders')
@@ -32,13 +34,12 @@ const OrderComplete: React.FC<OrderCompleteProps> = ({ orderNumber, onReturnHome
         .maybeSingle();
 
       if (data) {
-        console.log('Order details fetched:', data);
         setOrderDetails(data);
       }
     } catch (error) {
       console.error('Error fetching order details:', error);
     }
-    
+
     setLoading(false);
   };
 

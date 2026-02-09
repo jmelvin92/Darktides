@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, CreditCard, Truck, ShieldCheck, Lock, CheckCircle2, Package, AlertTriangle, Bitcoin, ExternalLink } from 'lucide-react';
+import { ArrowLeft, CreditCard, Truck, Lock, CheckCircle2, Package, AlertTriangle } from 'lucide-react';
 import FadeIn from './FadeIn';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import { CartItem } from '../src/components/MainSite';
@@ -32,7 +32,7 @@ interface ShippingData {
 }
 
 const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderComplete }) => {
-  const [step, setStep] = useState<'shipping' | 'payment-method' | 'payment' | 'complete'>('shipping');
+  const [step, setStep] = useState<'shipping' | 'payment-method' | 'complete'>('shipping');
   const [paymentMethod, setPaymentMethod] = useState<'venmo' | 'crypto'>('venmo');
   const [orderId, setOrderId] = useState<string | null>(null);
   const [processingCrypto, setProcessingCrypto] = useState(false);
@@ -60,7 +60,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
   const { validateCart, finalizeOrder } = useInventory();
 
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const shipping = 15.00; // Standard cold-chain shipping
+  const shipping = 0; // TODO: Restore to 15.00 for production
   const discountAmount = discountApplied?.amount || 0;
   const total = subtotal + shipping - discountAmount;
 
@@ -120,13 +120,78 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
     }
   };
 
+  const handleVenmoPayment = async () => {
+    setProcessingCrypto(true); // reuse processing state
+    setValidationError(null);
+
+    const finalOrderId = `DT-${Math.random().toString(36).substring(7).toUpperCase()}`;
+
+    try {
+      const customerData = {
+        firstName: shippingData.firstName,
+        lastName: shippingData.lastName,
+        email: shippingData.email,
+        phone: shippingData.phone,
+        address: shippingData.address,
+        city: shippingData.city,
+        state: shippingData.state,
+        zip: shippingData.zip,
+        orderNotes: shippingData.orderNotes
+      };
+
+      const cartItems = cart.map(item => ({
+        id: item.id,
+        name: item.name,
+        sku: item.sku,
+        price: item.price,
+        quantity: item.quantity
+      }));
+
+      const totals = {
+        subtotal,
+        shipping,
+        total,
+        discount_code: discountApplied?.code || null,
+        discount_amount: discountApplied?.amount || 0
+      };
+
+      const result = await finalizeOrder(finalOrderId, customerData, cartItems, totals, 'venmo');
+      if (!result.success) {
+        setValidationError(`Unable to process order: ${result.message || 'Unknown error'}`);
+        setProcessingCrypto(false);
+        return;
+      }
+
+      // Send order email (fire-and-forget, uses this file's working supabase client)
+      supabase.functions.invoke('send-order-email', {
+        body: { order_number: finalOrderId }
+      }).then(res => console.log('📧 Venmo order email:', res))
+        .catch(err => console.error('📧 Venmo order email failed:', err));
+
+      // Open Venmo deep link (non-blocking)
+      const venmoUrl = `https://venmo.com/darktides?txn=pay&amount=${total.toFixed(2)}`;
+      window.open(venmoUrl, '_blank');
+
+      // Navigate to OrderComplete
+      setOrderId(finalOrderId);
+      onClearCart();
+      if (onOrderComplete) {
+        onOrderComplete(finalOrderId);
+      } else {
+        setStep('complete');
+      }
+    } catch (error: any) {
+      console.error('Venmo payment error:', error);
+      setValidationError(`Order processing failed: ${error?.message || 'Unknown error'}`);
+      setProcessingCrypto(false);
+    }
+  };
+
   const handlePaymentMethodContinue = async () => {
     if (paymentMethod === 'crypto') {
-      // Skip the payment screen and go straight to Coinbase
       await handleCryptoPayment();
     } else {
-      // Show Venmo payment screen
-      setStep('payment');
+      await handleVenmoPayment();
     }
   };
 
@@ -175,9 +240,12 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
         return;
       }
       
-      // Don't send email here - wait until they complete payment on Coinbase
-      // The email will be sent from OrderComplete component after redirect
-      
+      // Send order email (fire-and-forget, uses this file's working supabase client)
+      supabase.functions.invoke('send-order-email', {
+        body: { order_number: finalOrderId }
+      }).then(res => console.log('📧 Crypto order email:', res))
+        .catch(err => console.error('📧 Crypto order email failed:', err));
+
       // Create Coinbase charge
       const { data, error } = await supabase.functions.invoke('create-coinbase-charge', {
         body: {
@@ -205,60 +273,6 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
       console.error('Error stack:', error?.stack);
       setValidationError(`Payment processing failed: ${error?.message || 'Unknown error'}`);
       setProcessingCrypto(false);
-    }
-  };
-
-  const handleVenmoConfirm = async () => {
-    // Generate a single order ID for everything
-    const finalOrderId = `DT-${Math.random().toString(36).substring(7).toUpperCase()}`;
-    console.log('🔥 FRONTEND Generated Order ID:', finalOrderId);
-    
-    // Prepare order data for email notification
-    const customerData = {
-      firstName: shippingData.firstName,
-      lastName: shippingData.lastName,
-      email: shippingData.email,
-      phone: shippingData.phone,
-      address: shippingData.address,
-      city: shippingData.city,
-      state: shippingData.state,
-      zip: shippingData.zip,
-      orderNotes: shippingData.orderNotes
-    };
-
-    const cartItems = cart.map(item => ({
-      id: item.id,
-      name: item.name,
-      sku: item.sku,
-      price: item.price,
-      quantity: item.quantity
-    }));
-
-    const totals = {
-      subtotal,
-      shipping,
-      total,
-      discount_code: discountApplied?.code || null,
-      discount_amount: discountApplied?.amount || 0
-    };
-    
-    // Finalize the order (deduct from inventory and send email) with venmo payment method
-    console.log('🔥 FRONTEND Calling finalizeOrder with ID:', finalOrderId);
-    const result = await finalizeOrder(finalOrderId, customerData, cartItems, totals, 'venmo');
-    console.log('🔥 FRONTEND finalizeOrder result:', result);
-    
-    if (result.success) {
-      // Set the order ID in state AFTER successful database call
-      setOrderId(finalOrderId);
-      console.log('🔥 FRONTEND Set state order ID:', finalOrderId);
-      onClearCart();
-      if (onOrderComplete) {
-        onOrderComplete(finalOrderId);
-      } else {
-        setStep('complete');
-      }
-    } else {
-      setValidationError('Unable to complete order. Please try again.');
     }
   };
 
@@ -346,11 +360,9 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
                 <div className="flex items-center gap-3 mb-8">
                   {step === 'shipping' && <Truck className="text-neon-blue w-6 h-6" />}
                   {step === 'payment-method' && <CreditCard className="text-neon-blue w-6 h-6" />}
-                  {step === 'payment' && <CreditCard className="text-neon-blue w-6 h-6" />}
                   <h2 className="text-xl font-bold text-white uppercase tracking-widest font-mono">
                     {step === 'shipping' && 'Shipping Information'}
                     {step === 'payment-method' && 'Payment Method'}
-                    {step === 'payment' && `Pay with ${paymentMethod === 'venmo' ? 'Venmo' : 'Coinbase'}`}
                   </h2>
                 </div>
 
@@ -486,8 +498,8 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
                         disabled={processingCrypto}
                         className="w-full bg-neon-blue text-obsidian font-bold py-4 uppercase tracking-[0.2em] text-sm hover:bg-neon-blue/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {processingCrypto ? 'Processing...' : 
-                          paymentMethod === 'crypto' ? 'Continue to Coinbase' : 'Continue to Payment'
+                        {processingCrypto ? 'Processing...' :
+                          paymentMethod === 'crypto' ? 'Continue to Coinbase' : 'Continue to Venmo'
                         }
                       </button>
                       {!processingCrypto && (
@@ -505,44 +517,6 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
                         <p className="text-xs text-red-400">{validationError}</p>
                       </div>
                     )}
-                  </div>
-                ) : step === 'payment' ? (
-                  // Only show Venmo payment screen since Coinbase goes direct
-                  <div className="space-y-8">
-                    <div className="p-6 border border-neon-blue/20 bg-neon-blue/5 rounded text-center space-y-4">
-                      <div className="flex justify-center mb-2">
-                        <div className="w-12 h-12 bg-[#008CFF] flex items-center justify-center rounded-lg shadow-xl">
-                          <span className="text-white font-bold text-2xl italic font-serif">V</span>
-                        </div>
-                      </div>
-                      <h3 className="text-white font-bold uppercase tracking-widest">Pay with Venmo</h3>
-                      <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">
-                        Total Amount: <span className="text-white font-mono font-bold">${total.toFixed(2)}</span>
-                        <br/>
-                        Send transfer to: <span className="text-neon-blue font-mono font-bold">@Darktides</span>
-                      </p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-start gap-3 p-4 bg-white/5 border border-white/10 rounded">
-                        <ShieldCheck className="w-5 h-5 text-neon-teal shrink-0 mt-0.5" />
-                        <p className="text-[10px] text-gray-400 leading-relaxed uppercase tracking-tight">
-                          Your order will be processed once the Venmo transfer is confirmed. Please include your name and a random emoji in the payment notes.
-                        </p>
-                      </div>
-                      <button 
-                        onClick={handleVenmoConfirm}
-                        className="w-full bg-neon-blue text-obsidian font-bold py-4 uppercase tracking-[0.2em] text-xs hover:bg-neon-blue/90 transition-all"
-                      >
-                        I have sent the Venmo transfer
-                      </button>
-                      <button 
-                        onClick={() => setStep('payment-method')}
-                        className="w-full text-gray-500 font-mono text-[10px] uppercase tracking-widest py-2 hover:text-white transition-colors"
-                      >
-                        ← Back
-                      </button>
-                    </div>
                   </div>
                 ) : null}
               </div>

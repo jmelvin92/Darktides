@@ -384,8 +384,32 @@ serve(async (req) => {
   }
 
   try {
-    const { record } = await req.json()
-    const order: OrderData = record
+    const body = await req.json()
+    let order: OrderData
+
+    if (body.record) {
+      // Direct record passed (legacy / DB trigger style)
+      order = body.record
+    } else if (body.order_number) {
+      // Only order_number passed — look up from DB using service role key
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+      const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      const supabase = createClient(supabaseUrl, serviceRoleKey)
+
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('order_number', body.order_number)
+        .single()
+
+      if (error || !data) {
+        throw new Error(`Order not found: ${body.order_number} — ${error?.message || 'no data'}`)
+      }
+
+      order = data as OrderData
+    } else {
+      throw new Error('Must provide either record or order_number')
+    }
 
     console.log(`Processing order: ${order.order_number}`)
 
