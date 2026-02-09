@@ -169,7 +169,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
         .catch(err => console.error('📧 Venmo order email failed:', err));
 
       // Open Venmo deep link (non-blocking)
-      const venmoUrl = `https://venmo.com/darktides?txn=pay&amount=${total.toFixed(2)}`;
+      const venmoUrl = `https://venmo.com/darktides?txn=pay&amount=${total.toFixed(2)}&note=${encodeURIComponent(`${finalOrderId} ☕`)}`;
       window.open(venmoUrl, '_blank');
 
       // Navigate to OrderComplete
