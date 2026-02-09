@@ -75,20 +75,22 @@ src/admin/
 - ~~`release_reservation()`~~ - ⚠️ DEPRECATED (reservations disabled)
 - ~~`cleanup_expired_reservations()`~~ - ⚠️ DEPRECATED (reservations disabled)
 
-### 3. Email Notification System (COMPLETED)
+### 3. Email Notification System (COMPLETED - Updated February 2025)
 **Status**: ✅ Production-ready
 **Backend**: Supabase Edge Functions + Resend API
+**Trigger**: Frontend invocation from Checkout.tsx (NOT database triggers)
 
 #### Key Features:
 - **Business owner notifications** - receives email for every confirmed order
 - **Order details included** - customer info, shipping address, product details
-- **Automated trigger** - fires when order status = 'confirmed'
+- **Frontend-triggered** - email sent from Checkout.tsx right after `finalizeOrder()` succeeds
 - **Resend integration** - uses 'onboarding@resend.dev' sender address
 
 #### Core Files:
 ```
 supabase/functions/send-order-email/index.ts  # Edge Function for emails
 src/lib/supabase/migrations/002_orders_and_email.sql  # Enhanced orders table
+src/lib/supabase/migrations/013_remove_email_trigger.sql  # Dropped DB triggers
 ```
 
 #### Email Content Includes:
@@ -97,6 +99,21 @@ src/lib/supabase/migrations/002_orders_and_email.sql  # Enhanced orders table
 - Order total and subtotal
 - Order ID for tracking
 - Order notes if provided
+- Payment method (Venmo or Crypto)
+
+#### Email Architecture (CRITICAL):
+- **Database triggers REMOVED** (migration 013) — `trigger_order_confirmed_email` and `trigger_new_order_email` dropped
+- **Email sent from Checkout.tsx** using the INLINE supabase client (lines 9-13), NOT the shared client from `src/lib/supabase/client.ts`
+- **Edge function accepts two input formats**:
+  - `{ record: <full order data> }` — legacy/admin panel style
+  - `{ order_number: 'DT-XXXXX' }` — new: looks up order server-side using service role key (bypasses RLS)
+- **Admin panel "Send Email" button** still works as a manual fallback
+
+#### ⚠️ IMPORTANT: Two Supabase Clients
+The codebase has TWO different supabase client instances:
+1. **Checkout.tsx inline client** (line 13): `createClient(url, key)` with DEFAULT settings — `persistSession: true`. **Edge function invocations WORK from this client.**
+2. **Shared client** (`src/lib/supabase/client.ts`): `createClient(url, key, { auth: { persistSession: false } })`. **Edge function invocations FAIL from this client** because no auth header is sent.
+- OrderComplete.tsx and other components use the shared client — fine for DB queries, but DO NOT use it for `functions.invoke()`
 
 #### Payment Instructions:
 - **Venmo username**: @Darktides (NOT @DarkTidesResearch)
@@ -107,13 +124,20 @@ src/lib/supabase/migrations/002_orders_and_email.sql  # Enhanced orders table
 
 #### Checkout Flow (CRITICAL - DO NOT BREAK):
 1. **Add to Cart**: `handleAdd()` in Store.tsx → calls `checkAndReserve()` → checks stock availability only
-2. **Payment Method Selection**: Customer chooses Venmo or Coinbase (crypto)
-3. **Order Processing**: 
-   - **Venmo**: `finalizeOrder()` with 5 params → status='confirmed' → email sent immediately
-   - **Crypto**: `finalizeOrder()` with 6 params (payment_method='crypto') → status='pending' → no email yet
-4. **Payment Complete**: 
-   - **Venmo**: `handleVenmoConfirm()` → order already confirmed
-   - **Crypto**: Redirect from Coinbase → `confirm_crypto_order()` → status='confirmed' → email sent
+2. **Shipping Form**: Customer fills in shipping details + optional discount code
+3. **Payment Method Selection**: Customer chooses Venmo or Coinbase (crypto)
+4. **Order Processing** (unified for both methods):
+   - `finalizeOrder()` deducts stock and creates order in DB
+   - `send-order-email` edge function invoked with `{ order_number }` (fire-and-forget)
+   - **Venmo**: Opens Venmo deep link (`window.open`) → navigates to OrderComplete
+   - **Crypto**: Creates Coinbase charge → redirects to Coinbase (`window.location.href`)
+5. **Order Complete**:
+   - **Venmo**: In-app navigation to OrderComplete (no page reload)
+   - **Crypto**: Coinbase redirects back with `?order=DT-XXXXX` → page reloads → OrderComplete displays
+
+#### Checkout Steps (UI):
+- Only TWO steps: `'shipping'` → `'payment-method'` (the old `'payment'` step with "I have sent the Venmo transfer" was removed)
+- Both Venmo and Crypto finalize immediately when clicking "Continue to Venmo" / "Continue to Coinbase"
 
 #### Out-of-Stock Behavior:
 - Products with `stock_quantity = 0` stay visible
@@ -148,24 +172,19 @@ VITE_SUPABASE_ANON_KEY=eyJ[long-jwt-token]
 
 ## CRITICAL CODE SECTIONS (DO NOT MODIFY WITHOUT CARE)
 
-### 1. Checkout Order Finalization (Checkout.tsx:72-85)
+### 1. Checkout Order Finalization (Checkout.tsx)
+Both `handleVenmoPayment()` and `handleCryptoPayment()` follow the same pattern:
 ```typescript
-const handleVenmoConfirm = async () => {
-  // Generate order ID
-  const orderId = `DT-${Math.random().toString(36).substring(7).toUpperCase()}`;
-  
-  // Finalize the order (deduct from inventory)
-  const result = await finalizeOrder(orderId);
-  
-  if (result.success) {
-    onClearCart();
-    setStep('complete');
-  } else {
-    setValidationError('Unable to complete order. Please try again.');
-  }
-};
+// 1. Create order ID
+const finalOrderId = `DT-${Math.random().toString(36).substring(7).toUpperCase()}`;
+// 2. Finalize order (deduct stock)
+const result = await finalizeOrder(finalOrderId, customerData, cartItems, totals, paymentMethod);
+// 3. Send email (fire-and-forget, uses Checkout.tsx's inline supabase client)
+supabase.functions.invoke('send-order-email', { body: { order_number: finalOrderId } });
+// 4. Redirect to payment (Venmo deep link or Coinbase)
 ```
-**⚠️ WARNING**: This function permanently deducts inventory. Any changes to checkout flow MUST call `finalizeOrder()` or inventory will not be updated.
+**⚠️ WARNING**: `finalizeOrder()` permanently deducts inventory. Any checkout changes MUST call it or inventory will not be updated.
+**⚠️ WARNING**: Email MUST use the inline `supabase` client in Checkout.tsx (line 13), NOT the shared client from `client.ts`. The shared client has `persistSession: false` which breaks `functions.invoke()`.
 
 ### 2. Cart Reservation (Store.tsx:36-49)
 ```typescript
@@ -386,49 +405,31 @@ supabase functions deploy send-contact-email
 - Removed unnecessary "Payment Method" field from order details
 - Cleaner order confirmation display
 
-### Crypto Payment Email Fix:
-**Problem**: Crypto payment emails weren't sending because:
-- Venmo orders insert with status='confirmed' (email triggers)
-- Crypto orders insert with status='pending' (no email trigger)
-- Database trigger only fired on INSERT, not UPDATE
+### Email System Overhaul (February 2025):
+**Problem**: Multiple iterations of email triggers had reliability issues:
+1. Original DB trigger fired on INSERT only → crypto emails never sent
+2. Fixed DB trigger to fire on INSERT+UPDATE → emails sent prematurely (before Coinbase payment)
+3. Moved email to OrderComplete.tsx → failed because shared supabase client has `persistSession: false` which breaks `functions.invoke()`
 
-**Solution** (in `fix_crypto_emails_final.sql`):
-- Make crypto orders insert as 'confirmed' just like Venmo
-- This ensures the same trigger that works for Venmo also works for crypto
-- Apply this SQL in Supabase to fix crypto email notifications
+**Final Solution**:
+- **DB triggers dropped** (migration 013) — `trigger_order_confirmed_email` and `trigger_new_order_email` removed
+- **Email sent from Checkout.tsx** right after `finalizeOrder()` using the inline supabase client (which has default `persistSession: true` and works for edge function invocations)
+- **Edge function updated** to accept `{ order_number: '...' }` — looks up order server-side with service role key (bypasses RLS)
+- Email fires for both Venmo and crypto at the same point: right after order creation
 
 ### Admin Panel Email Features:
-- Added manual "Send Email" button for each order in admin panel
+- Manual "Send Email" button for each order in admin panel
 - Can resend order notification emails at any time
 - Useful fallback if automatic emails fail
 
-### Venmo Deep Link Integration (February 2025)
-**Status**: 🧪 In Testing
-**File**: `components/Checkout.tsx` (lines ~509-559)
+### Unified Payment Flow (February 2025)
+**Status**: ✅ Production-ready
 
 #### What Changed:
-- **"Pay with Venmo" button** opens Venmo app directly via `venmo://paycharge` deep link
-- Pre-fills recipient and order total amount automatically
-- **Manual fallback section** below with total + @Darktides username for customers who can't use the link
-- Existing "I have sent the Venmo transfer" confirmation button preserved (triggers `handleVenmoConfirm()`)
-
-#### Technical Details:
-- **Deep link format**: `venmo://paycharge?txn=pay&recipients=17753154151&amount={total}`
-- **Recipient**: Phone number `17753154151` — username-based matching (`Darktides`) was showing 2 duplicate accounts, and the Venmo QR code user ID (`2751118610268160810`) was rejected as "not a valid 10-digit number"
-- **Opens via**: `window.open(url, '_blank')` — using `window.location.href` navigated away from the checkout page, causing the user to land on the home page when returning from Venmo (React state lost)
-- **No `note` parameter** in the deep link — customer manually adds name + random emoji per existing instructions
-- **No changes** to `handleVenmoConfirm()`, `finalizeOrder()`, or any inventory/order logic
-
-#### Known Limitations:
-- `venmo://` deep link only works on mobile (desktop users must use manual fallback)
-- Venmo personal accounts don't support callbacks/webhooks — no way to auto-detect payment completion
-- Customer must manually return to browser and tap "I have sent the Venmo transfer" to finalize order and trigger email
-
-#### Still Needs Testing:
-- [ ] Confirm deep link opens Venmo app and pre-fills correct account + amount
-- [ ] Confirm checkout page stays intact when returning from Venmo app
-- [ ] Confirm "I have sent the Venmo transfer" button still finalizes order and sends email
-- [ ] Test with discount code applied (discounted total should appear in deep link)
+- **Removed the old Venmo "payment" step** — no more "I have sent the Venmo transfer" confirmation screen
+- **Both Venmo and Crypto now follow the same flow**: Click button → `finalizeOrder()` → send email → redirect to payment → OrderComplete
+- **Venmo deep link**: `https://venmo.com/darktides?txn=pay&amount={total}` opened via `window.open(url, '_blank')`
+- **Button text**: "Continue to Venmo" / "Continue to Coinbase" on payment method screen
 
 #### ⚠️ TEMPORARY: Shipping set to $0 for testing
 - Line 63 in Checkout.tsx: `const shipping = 0; // TODO: Restore to 15.00 for production`
@@ -488,10 +489,14 @@ supabase functions deploy send-contact-email
 ## Known Issues & Limitations
 - ~~Reservation expiry~~ - RESOLVED (reservations disabled for simplicity)
 - ~~Order creation failing for crypto~~ - RESOLVED (missing database column and function signature issues fixed)
+- ~~Email not sending from OrderComplete~~ - RESOLVED (moved to Checkout.tsx; shared supabase client's `persistSession: false` breaks `functions.invoke()`)
+- **Shared supabase client (`src/lib/supabase/client.ts`) cannot invoke edge functions** — use inline client or direct `fetch()` instead
+- **Shipping is $0 for testing** — MUST restore to $15 before production
 - Admin tool requires manual stock adjustments (or direct SQL)
 - No automated low-stock alerts yet
 - Browser caching can be aggressive - users may need hard refresh (Cmd+Shift+R) after deployments
 - GitHub Pages CDN can take 5-10 minutes to propagate changes globally
+- AgeVerification uses `sessionStorage` — may reappear after Coinbase redirect (cross-origin navigation can clear sessionStorage in some browsers)
 
 ## Security Notes
 - Uses Supabase Row Level Security (RLS)
@@ -576,5 +581,5 @@ npm run deploy   # Deploy to GitHub Pages
 
 ---
 
-**Last Updated**: January 2025  
+**Last Updated**: February 2025
 **Claude Context**: This file ensures continuity across chat sessions and provides critical context for future development.
