@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
-import { Eye, Download, Check, X, Mail, Send } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+import { Eye, Download, Check, X, Mail, Send, Truck } from 'lucide-react';
 import type { Order as OrderType } from '../../lib/supabase/database.types';
+
+// Inline supabase client for edge function invocations (shared client has persistSession: false which breaks functions.invoke)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseEdge = createClient(supabaseUrl, supabaseAnonKey);
 
 // Parse the JSON fields from the database order
 interface Order {
@@ -27,6 +33,9 @@ function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'pending'>('all');
+  const [shippingOrderId, setShippingOrderId] = useState<string | null>(null);
+  const [trackingUrl, setTrackingUrl] = useState('');
+  const [shippingLoading, setShippingLoading] = useState(false);
 
   useEffect(() => {
     loadOrders();
@@ -85,13 +94,141 @@ function AdminOrders() {
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
-    const { error } = await (supabase
-      .from('orders') as any)
-      .update({ status: newStatus })
-      .eq('id', orderId);
+    if (newStatus === 'confirmed') {
+      // Find the order to get its order_number
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
 
-    if (!error) {
+      // Call confirm_order RPC — deducts inventory atomically
+      const { data, error } = await (supabase.rpc as any)('confirm_order', {
+        p_order_number: order.order_number
+      });
+
+      if (error) {
+        console.error('Confirm order RPC error:', error);
+        alert(`Failed to confirm order: ${error.message}`);
+        return;
+      }
+
+      // Check RPC result
+      const result = data?.[0] || data;
+      if (!result?.success) {
+        alert(`Cannot confirm order: ${result?.message || 'Unknown error'}`);
+        return;
+      }
+
+      // Inventory deducted successfully — send full order summary email
+      try {
+        const { error: emailError } = await supabaseEdge.functions.invoke('send-order-email', {
+          body: { order_number: order.order_number }
+        });
+        if (emailError) {
+          console.error('Auto-email after confirm failed:', emailError);
+          alert('Order confirmed but email failed to send. Use the manual Send Email button.');
+        } else {
+          console.log('Order confirmed + email sent for', order.order_number);
+        }
+      } catch (emailErr) {
+        console.error('Auto-email exception:', emailErr);
+        alert('Order confirmed but email failed to send. Use the manual Send Email button.');
+      }
+
       loadOrders();
+    } else if (newStatus === 'shipped') {
+      // Show tracking input instead of immediately updating
+      setShippingOrderId(orderId);
+      setTrackingUrl('');
+    } else if (newStatus === 'cancelled') {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+
+      const { error } = await (supabase
+        .from('orders') as any)
+        .update({ status: 'cancelled' })
+        .eq('id', orderId);
+
+      if (error) {
+        console.error('Error cancelling order:', error);
+        alert(`Failed to cancel order: ${error.message}`);
+        return;
+      }
+
+      // Send cancellation email to customer
+      try {
+        const { error: emailError } = await supabaseEdge.functions.invoke('send-order-email', {
+          body: { order_number: order.order_number, type: 'cancelled' }
+        });
+        if (emailError) {
+          console.error('Cancellation email failed:', emailError);
+          alert('Order cancelled but email failed to send.');
+        } else {
+          console.log('Cancellation email sent for', order.order_number);
+        }
+      } catch (emailErr) {
+        console.error('Cancellation email exception:', emailErr);
+        alert('Order cancelled but email failed to send.');
+      }
+
+      loadOrders();
+    } else {
+      // For other status changes, simple UPDATE
+      const { error } = await (supabase
+        .from('orders') as any)
+        .update({ status: newStatus })
+        .eq('id', orderId);
+
+      if (!error) {
+        loadOrders();
+      }
+    }
+  };
+
+  const handleShipOrder = async () => {
+    if (!shippingOrderId) return;
+    setShippingLoading(true);
+
+    try {
+      const order = orders.find(o => o.id === shippingOrderId);
+      if (!order) return;
+
+      // Update order status + tracking info
+      const updateData: any = { status: 'shipped' };
+      if (trackingUrl.trim()) {
+        updateData.tracking_url = trackingUrl.trim();
+      }
+
+      const { error } = await (supabase
+        .from('orders') as any)
+        .update(updateData)
+        .eq('id', shippingOrderId);
+
+      if (error) {
+        console.error('Error updating order to shipped:', error);
+        alert(`Failed to mark as shipped: ${error.message}`);
+        return;
+      }
+
+      // Send shipping notification email (fire-and-forget style, don't block on failure)
+      try {
+        const { error: emailError } = await supabaseEdge.functions.invoke('send-order-email', {
+          body: { order_number: order.order_number, type: 'shipped' }
+        });
+        if (emailError) {
+          console.error('Shipping email failed:', emailError);
+          alert('Order marked as shipped but shipping email failed to send.');
+        } else {
+          console.log('Shipping email sent for', order.order_number);
+        }
+      } catch (emailErr) {
+        console.error('Shipping email exception:', emailErr);
+        alert('Order marked as shipped but shipping email failed to send.');
+      }
+
+      loadOrders();
+    } finally {
+      setShippingOrderId(null);
+      setTrackingUrl('');
+      setShippingLoading(false);
     }
   };
 
@@ -111,8 +248,8 @@ function AdminOrders() {
         return;
       }
 
-      // Send the email via edge function
-      const { data, error } = await supabase.functions.invoke('send-order-email', {
+      // Send the email via edge function (use supabaseEdge for working functions.invoke)
+      const { data, error } = await supabaseEdge.functions.invoke('send-order-email', {
         body: {
           record: fullOrder
         }
@@ -364,6 +501,108 @@ function AdminOrders() {
           </div>
         ))}
       </div>
+
+      {/* Shipping Tracking Modal */}
+      {shippingOrderId && (() => {
+        const shippingOrder = orders.find(o => o.id === shippingOrderId);
+        if (!shippingOrder) return null;
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-charcoal border border-gray-800 rounded-lg p-4 md:p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-2">
+                  <Truck size={20} className="text-neon-blue" />
+                  <h2 className="text-lg font-semibold text-white">Ship Order</h2>
+                </div>
+                <button
+                  onClick={() => { setShippingOrderId(null); setTrackingUrl(''); }}
+                  className="text-gray-400 hover:text-white p-1"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Order & Customer Info */}
+              <div className="bg-gray-900 rounded-lg p-3 mb-4 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-xs text-gray-400">Order</span>
+                  <span className="text-sm text-white font-mono">{shippingOrder.order_number}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-xs text-gray-400">Customer</span>
+                  <span className="text-sm text-white">{shippingOrder.customer_name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-xs text-gray-400">Email</span>
+                  <span className="text-sm text-white">{shippingOrder.customer_email}</span>
+                </div>
+                {shippingOrder.customer_phone && (
+                  <div className="flex justify-between">
+                    <span className="text-xs text-gray-400">Phone</span>
+                    <span className="text-sm text-white">{shippingOrder.customer_phone}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-xs text-gray-400">Total</span>
+                  <span className="text-sm text-white font-semibold">${shippingOrder.total.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Shipping Address */}
+              {shippingOrder.shipping_address && (
+                <div className="bg-gray-900 rounded-lg p-3 mb-4">
+                  <p className="text-xs text-gray-400 mb-1">Shipping Address</p>
+                  <p className="text-sm text-white whitespace-pre-line">{shippingOrder.shipping_address}</p>
+                </div>
+              )}
+
+              {/* Items */}
+              <div className="bg-gray-900 rounded-lg p-3 mb-4">
+                <p className="text-xs text-gray-400 mb-2">Items</p>
+                {shippingOrder.items?.map((item, idx) => (
+                  <div key={idx} className="flex justify-between text-sm py-1">
+                    <span className="text-white">{item.name} x {item.quantity}</span>
+                    <span className="text-gray-300">${(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tracking URL Input */}
+              <label className="block text-sm text-gray-400 mb-1">Tracking URL (optional)</label>
+              <input
+                type="url"
+                value={trackingUrl}
+                onChange={(e) => setTrackingUrl(e.target.value)}
+                placeholder="Paste full tracking link from any carrier"
+                className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-neon-blue mb-4"
+              />
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setShippingOrderId(null); setTrackingUrl(''); }}
+                  className="flex-1 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleShipOrder}
+                  disabled={shippingLoading}
+                  className="flex-1 py-2 bg-neon-blue text-obsidian font-semibold rounded-lg hover:bg-neon-blue/80 transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {shippingLoading ? (
+                    <span>Sending...</span>
+                  ) : (
+                    <>
+                      <Send size={14} />
+                      <span>Ship & Notify</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Order Details Modal */}
       {selectedOrder && (

@@ -60,7 +60,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
   const { validateCart, finalizeOrder } = useInventory();
 
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const shipping = 15.00; // Standard cold-chain shipping
+  const shipping = 0; // TODO: Restore to 15.00 for production
   const discountAmount = discountApplied?.amount || 0;
   const total = subtotal + shipping - discountAmount;
 
@@ -162,11 +162,11 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
         return;
       }
 
-      // Send order email (fire-and-forget, uses this file's working supabase client)
-      supabase.functions.invoke('send-order-email', {
-        body: { order_number: finalOrderId }
-      }).then(res => console.log('📧 Venmo order email:', res))
-        .catch(err => console.error('📧 Venmo order email failed:', err));
+      // Send verification reminder to admin (fire-and-forget)
+      supabase.functions.invoke('send-verification-reminder', {
+        body: { order_number: finalOrderId, payment_method: 'venmo', total }
+      }).then(res => console.log('⚡ Venmo verification reminder:', res))
+        .catch(err => console.error('⚡ Venmo reminder failed:', err));
 
       // Open Venmo deep link (non-blocking)
       const venmoUrl = `https://venmo.com/darktides?txn=pay&amount=${total.toFixed(2)}&note=${encodeURIComponent(`${finalOrderId} ☕`)}`;
@@ -240,11 +240,11 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onBack, onClearCart, onOrderC
         return;
       }
       
-      // Send order email (fire-and-forget, uses this file's working supabase client)
-      supabase.functions.invoke('send-order-email', {
-        body: { order_number: finalOrderId }
-      }).then(res => console.log('📧 Crypto order email:', res))
-        .catch(err => console.error('📧 Crypto order email failed:', err));
+      // Send verification reminder to admin (fire-and-forget)
+      supabase.functions.invoke('send-verification-reminder', {
+        body: { order_number: finalOrderId, payment_method: 'crypto', total }
+      }).then(res => console.log('⚡ Crypto verification reminder:', res))
+        .catch(err => console.error('⚡ Crypto reminder failed:', err));
 
       // Create Coinbase charge
       const { data, error } = await supabase.functions.invoke('create-coinbase-charge', {

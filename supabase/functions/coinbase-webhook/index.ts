@@ -105,34 +105,7 @@ serve(async (req) => {
 
         if (data && data[0]?.success) {
           const orderNumber = data[0].message
-          console.log(`Order ${orderNumber} payment confirmed`)
-
-          // Get order details for email
-          const { data: orderData, error: orderError } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('order_number', orderNumber)
-            .single()
-
-          if (!orderError && orderData) {
-            // Trigger email notification
-            const emailData = {
-              record: {
-                ...orderData,
-                payment_confirmation: {
-                  method: 'crypto',
-                  network: event.data.payments[0]?.network || 'Unknown',
-                  transaction_id: event.data.payments[0]?.transaction_id || 'N/A',
-                  confirmed_at: new Date().toISOString()
-                }
-              }
-            }
-
-            // Call the send-order-email function
-            await supabase.functions.invoke('send-order-email', {
-              body: emailData
-            })
-          }
+          console.log(`Order ${orderNumber} crypto payment tracked. Admin will confirm in panel.`)
         }
         break
       }
